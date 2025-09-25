@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>팀 매칭 & 점수 관리</title>
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --panel: #111826;
+            --muted: #8aa0b8;
+            --text: #e6eef8;
+            --acc: #4da3ff;
+            --acc2: #22c55e;
+            --warn: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Pretendard, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
+            background: linear-gradient(180deg, #09111a, #0b0f14 30%, #0f172a);
+            color: var(--text)
+        }
+
+        .wrap {
+            margin: 28px auto;
+            padding: 20px
+        }
+
+        h1 {
+            font-size: 22px;
+            margin: 0 0 14px;
+            letter-spacing: .2px;
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 14px
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-weight: 600;
+            background: #1e293b;
+            color: #dbe7f8;
+            cursor: pointer;
+            transition: .15s
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(77, 163, 255, .15)
+        }
+
+        .btn.primary {
+            background: var(--acc);
+            color: #031427
+        }
+
+        .btn.success {
+            background: var(--acc2);
+            color: #06220f
+        }
+
+        .btn.warn {
+            background: var(--warn)
+        }
+
+        .btn.ghost {
+            background: #0b1220;
+            color: #9db7d9;
+            border: 1px solid #20304a
+        }
+
+        .btn.small {
+            padding: 6px 10px;
+            border-radius: 10px
+        }
+
+        /* ===== Layout ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.7fr) minmax(500px, 1fr);
+            gap: 14px;
+            min-width: 0;
+        }
+
+        @media (max-width: 980px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .panel {
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        .panel .hd {
+            padding: 12px 14px;
+            border-bottom: 1px solid #1c2b45;
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .panel .hd .title {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+            color: #a9c3e6
+        }
+
+        .panel .bd {
+            padding: 14px
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            background: #0a1220;
+            border: 1px solid #233656;
+            color: #e6eef8;
+            border-radius: 10px;
+            padding: 9px 11px
+        }
+
+        input[type="file"] {
+            color: #9bb3cf
+        }
+
+        .team {
+            border: 1px dashed #2a4168;
+            border-radius: 14px;
+            padding: 12px;
+            background: linear-gradient(180deg, #0c1626, #0c1422);
+            min-width: 0
+        }
+
+        .team h3 {
+            margin: 0 0 8px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .team ul {
+            list-style: none;
+            margin: 0;
+            padding: 4px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 263px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-gutter: stable both-edges;
+            padding-right: 6px;
+        }
+
+        /* 팀 행 */
+        .teamRow {
+            display: grid;
+            grid-template-columns: minmax(12ch, 1fr) 80px 70px minmax(60px, max-content);
+            gap: 8px;
+            padding: 10px 14px;
+            background: #0e1a2a;
+            border: 1px solid #1f2e47;
+            border-radius: 12px;
+            align-items: center;
+        }
+
+        .teamRow:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .25);
+            transition: .15s;
+        }
+
+        .teamRow .cell-name {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            white-space: normal;
+            text-overflow: unset;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        .teamRow .cell-line {
+            text-align: center;
+            opacity: .9
+        }
+
+        .teamRow .cell-wr {
+            text-align: center
+        }
+
+        .teamRow .cell-score {
+            text-align: right;
+            justify-self: end;
+            white-space: nowrap;
+            min-width: 60px;
+        }
+
+        .tabnum {
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1
+        }
+
+        .avg {
+            font-weight: 800
+        }
+
+        .avg .good {
+            color: var(--acc2)
+        }
+
+        .avg .bad {
+            color: #f59e0b
+        }
+
+        .winbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            min-width: 0
+        }
+
+        .winbar label {
+            align-items: center;
+            gap: 6px;
+        }
+
+        .winbar label input {
+            width: 80px;
+            max-width: 80px
+        }
+
+        .winbar label select {
+            max-width: 180px
+        }
+
+        .winbar .btn.success {
+            min-width: 108px;
+            white-space: nowrap;
+            flex: 0 0 auto
+        }
+
+        .winbar .btn.ghost {
+            white-space: nowrap
+        }
+
+        .teamControls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin: 8px 0 12px
+        }
+
+        /* ===== Roster ===== */
+        .rosterTable {
+            border: 1px solid #1c2b45;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 10px
+        }
+
+        .rhead,
+        .rbody {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0 8px
+        }
+
+        .rhead thead th {
+            font-size: 12px;
+            color: #8fb1d6;
+            font-weight: 700;
+            text-align: center;
+            padding: 8px;
+            background: #0c1422
+        }
+
+        .rscroll {
+            max-height: 440px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: transparent;
+            padding: 6px
+        }
+
+        .rbody tbody tr {
+            background: linear-gradient(180deg, #0b1422, #0a111c);
+            border: 1px solid #1c2b45
+        }
+
+        .rbody tbody tr td {
+            padding: 10px 8px;
+            text-align: center
+        }
+
+        .rbody tbody tr td:first-child {
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px
+        }
+
+        .rbody tbody tr td:last-child {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px
+        }
+
+        .rbody .cell-name,
+        .rhead th:nth-child(2) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 12ch;
+            text-align: center
+        }
+
+        .cell-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px
+        }
+
+        .line-select {
+            width: 54px;
+            height: 30px;
+            background: #0a1220;
+            border: 1px solid #233656;
+            color: #e6eef8;
+            border-radius: 8px;
+            appearance: none;
+            text-align: center
+        }
+
+        .rscroll input.cell-score,
+        .rscroll input.cell-games {
+            width: 100% !important;
+            max-width: 100%;
+            box-sizing: border-box
+        }
+
+        .wl-badge,
+        .wr-badge {
+            font-size: 11px;
+            opacity: .85
+        }
+
+        .wr-good {
+            color: var(--acc2)
+        }
+
+        .wr-bad {
+            color: var(--warn)
+        }
+
+        select {
+            max-width: 180px !important;
+            background: #0a1220;
+            border: 1px solid #233656;
+            color: #e6eef8;
+            border-radius: 10px;
+            height: 34px;
+            padding: 0 10px;
+            appearance: none;
+        }
+
+        .listbar.manage {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) 120px repeat(2, auto) auto auto;
+            gap: 8px 12px;
+            align-items: center;
+        }
+
+        @media (max-width: 1100px) {
+            .listbar.manage {
+                grid-template-columns: minmax(160px, 1fr) 110px auto auto;
+            }
+        }
+
+        .listbar.manage #scoreInput {
+            width: 110px !important;
+        }
+
+        #linePrimaryInput,
+        #lineSecondaryInput {
+            width: 80px;
+            height: 28px;
+            font-size: 12px;
+        }
+
+        .listbar.manage label[for="rosterSort"],
+        .listbar.manage select#rosterSort {
+            justify-self: end;
+        }
+
+        /* 검색어 하이라이트 */
+        mark {
+            background: rgba(77, 163, 255, .25);
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <h1>팀 매칭 & 점수 관리</h1>
+        <div class="grid">
+            <!-- Left: Teams -->
+            <div class="panel">
+                <div class="hd">
+                    <div class="title">Teams</div>
+                </div>
+                <div class="bd">
+                    <div class="teamControls">
+                        <label class="muted">팀 섞기 기준
+                            <select id="balanceMode">
+                                <!-- <option value="ignore_line">라인무시</option> -->
+                                <option value="prefer_line" selected>라인우선</option>
+                                <option value="prefer_mmr">MMR우선</option>
+                            </select>
+                            <label class="muted">균형 허용치
+                                <input id="mmrTolerance" type="number" value="120" style="width:90px" />
+                            </label>
+                            <label class="muted">섞기 강도
+                                <select id="mixStrength">
+                                    <option value="normal" selected>보통</option>
+                                    <option value="strong">강함</option>
+                                </select>
+                            </label>
+                        </label>
+                        <label class="muted">팀 정렬
+                            <select id="teamSort">
+                                <option value="name" selected>이름 ▲</option>
+                                <option value="line">주/부라인</option>
+                                <option value="wr">승률 ▲</option>
+                                <option value="score">점수 ▲</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="teams">
+                        <div class="team" id="team1Box">
+                            <h3>1팀 <span class="avg" id="avg1">평균 0</span></h3>
+                            <ul id="team1"></ul>
+                        </div>
+                        <div class="team" id="team2Box">
+                            <h3>2팀 <span class="avg" id="avg2">평균 0</span></h3>
+                            <ul id="team2"></ul>
+                        </div>
+                    </div>
+
+                    <div class="winbar" style="margin-top:10px">
+                        <div style="width: 100%;">
+                            <label class="muted">점수 방식
+                                <select id="scoringMode">
+                                    <option value="elo">Elo 레이팅</option>
+                                    <option value="fixed">고정 가산/감산</option>
+                                </select>
+                            </label>
+                            <button class="btn success" id="btnWin1" title="1팀 승">1팀 승리</button>
+                            <button class="btn success" id="btnWin2" title="2팀 승">2팀 승리</button>
+                        </div>
+
+                        <label class="muted">Elo K <input id="eloK" type="number" value="60" /></label>
+                        <label class="muted">승리 보상 <input id="winBonusInput" type="number" value="30" /></label>
+                        <div style="margin-left:auto;">
+                            <button class="btn primary" id="btnRemakeTeams">현재 멤버로 팀 다시 짜기</button>
+                            <button class="btn ghost" id="btnClearTeams">팀 비우기</button>
+                        </div>
+                    </div>
+
+                    <div class="muted">배치: 각 플레이어의 <b>현재 판수가 ≤ 10</b>이면 점수 변화가 <b>2배</b>로 적용됩니다.</div>
+                    <div class="muted">고정감산을 선택할 경우 승리 보상만큼의 점수가 가산/감산 됩니다.</div>
+                    <div class="muted">멤버를 인원관리에 드래그 드롭하여 제외할 수 있습니다.</div>
+                    <div class="muted">
+                        티어 예시 (400점 단위):<br>
+                        Iron: 0–399<br>
+                        Bronze: 400–799<br>
+                        Silver: 800–1199<br>
+                        Gold: 1200–1599<br>
+                        Platinum: 1600–1999<br>
+                        Emerald: 2000–2399<br>
+                        Diamond: 2400–2799<br>
+                        Master: 2800–3199<br>
+                        Grandmaster: 3200–3599<br>
+                        Challenger: 3600+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Roster + IO -->
+            <div class="panel">
+                <div class="hd">
+                    <div class="title">인원 관리</div>
+                </div>
+                <div class="bd">
+                    <div class="listbar manage" style="gap:10px;align-items:center;flex-wrap:wrap;padding-bottom:12px;">
+                        <input class="grow" id="nameInput" type="text" placeholder="이름 (최대 16자)" />
+                        <input style="width:120px" id="scoreInput" type="number" placeholder="초기 점수" value="1000" />
+                        <label class="muted">주라인
+                            <select id="linePrimaryInput" class="line-select">
+                                <option value="A" selected>All</option>
+                                <option value="T">Top</option>
+                                <option value="J">Jungle</option>
+                                <option value="M">Mid</option>
+                                <option value="B">Bottom</option>
+                                <option value="S">Supporter</option>
+                            </select>
+                        </label>
+                        <label class="muted">부라인
+                            <select id="lineSecondaryInput" class="line-select">
+                                <option value="A" selected>All</option>
+                                <option value="T">Top</option>
+                                <option value="J">Jungle</option>
+                                <option value="M">Mid</option>
+                                <option value="B">Bottom</option>
+                                <option value="S">Supporter</option>
+                            </select>
+                        </label>
+                        <button class="btn" id="btnAdd">인원추가</button>
+
+                        <label class="muted" style="margin-left:auto">
+                            <select id="rosterSort">
+                                <option value="name" selected>이름 ▲</option>
+                                <option value="wr">승률 ▼</option>
+                                <option value="score">점수 ▼</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <!-- ▼ 이름 검색 바 추가 -->
+                    <div class="listbar" style="gap:10px;align-items:center;padding-bottom:10px;">
+                        <input id="rosterSearch" type="text" placeholder="이름 검색 (최소 1자)" style="width:220px" />
+                        <button class="btn small ghost" id="rosterSearchClear" title="검색 지우기">지우기</button>
+                        <span class="muted" id="rosterSearchCount">전체 0명</span>
+                    </div>
+                    <!-- ▲ 이름 검색 바 -->
+
+                    <div class="rosterTable">
+                        <table class="rhead" style="padding-left : 10px; padding-right:15px;">
+                            <colgroup>
+                                <col style="width:44px" />
+                                <col style="width:180px" />
+                                <col style="width:110px" />
+                                <col style="width:60px" />
+                                <col style="width:60px" />
+                                <col style="width:90px" />
+                                <col style="width:50px" />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="checkAll"></th>
+                                    <th>이름</th>
+                                    <th>라인<br><span class="muted" style="font-weight:400;">주/부</span></th>
+                                    <th>점수</th>
+                                    <th>판수</th>
+                                    <th>승/패</th>
+                                    <th>승률</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class="rscroll">
+                            <table class="rbody">
+                                <colgroup>
+                                    <col style="width:44px" />
+                                    <col style="width:180px" />
+                                    <col style="width:110px" />
+                                    <col style="width:60px" />
+                                    <col style="width:60px" />
+                                    <col style="width:90px" />
+                                    <col style="width:50px" />
+                                </colgroup>
+                                <tbody id="rosterBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bar">
+                        <button class="btn primary" id="btnMakeTeams">팀 짜기 (선택 인원 짝수)</button>
+                        <button class="btn ghost" id="btnToTeam1">선택 → 1팀</button>
+                        <button class="btn ghost" id="btnToTeam2">선택 → 2팀</button>
+                        <button class="btn ghost" id="btnRemoveFromTeams">선택한 인원을 팀에서 제거</button>
+                    </div>
+                    <div class="listbar" style="padding-bottom:12px">
+                        <button class="btn warn" id="btnDelete">인원 삭제(선택)</button>
+                        <button class="btn" id="btnSave">텍스트로 저장</button>
+                    </div>
+                    <div class="listbar" style="padding-bottom:12px">
+                        <input id="fileInput" type="file" accept=".txt,.json" />
+                        <button class="btn" id="btnLoad">불러오기</button>
+                        <span class="muted">현재 멤버 목록을 저장하여 불러올 수 있습니다.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== 상태키 =====
+        const STORAGE_KEY = 'team_roster_v1', WIN_BONUS_KEY = 'win_bonus_v1', MODE_KEY = 'scoring_mode_v1', ELO_K_KEY = 'elo_k_v1';
+
+        let roster = [];                 // {id,name,score,games,wins,losses,mainLine,subLine}
+        let currentTeams = { team1: [], team2: [] }; // ids
+        let teamHistory = [];          // [{team1:[...], team2:[...]} ...]
+        const HISTORY_LIMIT = 5;
+
+        // ===== 유틸 =====
+        const uid = () => Math.random().toString(36).slice(2, 10);
+        const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+        const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+        const isPlacement = g => (Number(g) || 0) <= 10;
+        const winRate = p => { const w = Number(p.wins) || 0, l = Number(p.losses) || 0, t = w + l; return t ? Math.round((w / t) * 100) : 0 };
+        const wrClass = rate => rate >= 53 ? 'wr-good' : (rate <= 47 ? 'wr-bad' : '');
+        const LINES = ['T', 'J', 'M', 'B', 'S', 'A'];
+        const LINE_TITLE = { T: 'Top', J: 'Jungle', M: 'Mid', B: 'Bottom', S: 'Supporter', A: 'All' };
+        const normLine = v => { v = String(v || 'A').toUpperCase(); return LINES.includes(v) ? v : 'A'; };
+        const linePair = p => `${normLine(p.mainLine)}/${normLine(p.subLine)}`;
+        const escapeHtml = (s = '') => s.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[ch]));
+
+
+        function pushHistory(split) {
+            teamHistory.unshift({
+                team1: (split.team1 || []).slice(),
+                team2: (split.team2 || []).slice()
+            });
+            if (teamHistory.length > HISTORY_LIMIT) teamHistory.pop();
+        }
+
+        // 여러 과거 조합과의 "같은 편 유지 수" 중 최대값 반환
+        function countSameSideMulti(t1Ids, t2Ids, histories = teamHistory.length ? teamHistory : [lastTeams]) {
+            let maxSame = 0;
+            for (const h of histories) {
+                const last1 = new Set(h.team1 || []);
+                const last2 = new Set(h.team2 || []);
+                let c = 0;
+                for (const id of t1Ids) if (last1.has(id)) c++;
+                for (const id of t2Ids) if (last2.has(id)) c++;
+                if (c > maxSame) maxSame = c;
+            }
+            return maxSame;
+        }
+
+        function countSameSide(t1Ids, t2Ids, diversityBase = lastTeams) {
+            const last1 = new Set(diversityBase.team1 || []);
+            const last2 = new Set(diversityBase.team2 || []);
+            let c = 0;
+            for (const id of t1Ids) if (last1.has(id)) c++;
+            for (const id of t2Ids) if (last2.has(id)) c++;
+            return c;
+        }
+
+        // 주어진 분할이 지난 팀과 얼마나 비슷한지 [0,1] (1=완전 동일)로 환산
+        function similarityWithLast(t1Ids, t2Ids, diversityBase = lastTeams) {
+            const total = (t1Ids.length + t2Ids.length) || 1;
+            return countSameSide(t1Ids, t2Ids, diversityBase) / total;
+        }
+
+        function saveLocal() { localStorage.setItem(STORAGE_KEY, JSON.stringify(roster)); }
+        function loadLocal() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    if (Array.isArray(data)) {
+                        roster = data.filter(x => x && x.name).map(x => ({
+                            id: x.id || uid(),
+                            name: String(x.name || '').trim(),
+                            score: Number(x.score) || 0,
+                            games: Math.max(0, Math.floor(Number(x.games) || 0)),
+                            wins: Math.max(0, Math.floor(Number(x.wins) || 0)),
+                            losses: Math.max(0, Math.floor(Number(x.losses) || 0)),
+                            mainLine: normLine(x.mainLine),
+                            subLine: normLine(x.subLine),
+                        }));
+                    }
+                }
+            } catch (e) { console.warn(e); }
+        }
+
+        // ===== DOM =====
+        const rosterBody = document.getElementById('rosterBody');
+        const checkAll = document.getElementById('checkAll');
+        const nameInput = document.getElementById('nameInput');
+        const scoreInput = document.getElementById('scoreInput');
+        const winBonusInput = document.getElementById('winBonusInput');
+        const scoringModeSel = document.getElementById('scoringMode');
+        const eloKInput = document.getElementById('eloK');
+        const fileInput = document.getElementById('fileInput');
+        const team1UL = document.getElementById('team1');
+        const team2UL = document.getElementById('team2');
+        const team1Box = document.getElementById('team1Box');
+        const team2Box = document.getElementById('team2Box');
+        const linePrimaryInput = document.getElementById('linePrimaryInput');
+        const lineSecondaryInput = document.getElementById('lineSecondaryInput');
+        const balanceModeSel = document.getElementById('balanceMode');
+        const teamSortSel = document.getElementById('teamSort');
+        const rosterSortSel = document.getElementById('rosterSort');
+
+        // 최근 팀(섞기 다양성 점수에 사용)
+        let lastTeams = { team1: [], team2: [] };
+
+        // 새 옵션 DOM
+        const mmrToleranceInput = document.getElementById('mmrTolerance');
+        const mixStrengthSel = document.getElementById('mixStrength');
+
+        // ▼ 검색 DOM
+        const rosterSearchInput = document.getElementById('rosterSearch');
+        const rosterSearchClear = document.getElementById('rosterSearchClear');
+        const rosterSearchCount = document.getElementById('rosterSearchCount');
+        let rosterSearchTerm = '';
+        const escapeRegExp = (s = '') => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        const lineOptionsHTML = (sel) => ['T', 'J', 'M', 'B', 'S', 'A'].map(k => `<option value="${k}" ${sel === k ? 'selected' : ''} title="${LINE_TITLE[k]}">${k}</option>`).join('');
+
+        // ===== 역할 배정(라인우선용) =====
+        function assignRoles(team) {
+            const roles = ['T', 'J', 'M', 'B', 'S'];
+            const used = new Set();
+            const assignment = {};
+            let primaryAssigned = 0;
+
+            for (const r of roles) {
+                const idx = team.findIndex(p => !used.has(p.id) && normLine(p.mainLine) === r);
+                if (idx >= 0) { const p = team[idx]; used.add(p.id); assignment[r] = p.id; primaryAssigned++; }
+            }
+            for (const r of roles) {
+                if (assignment[r]) continue;
+                const idx = team.findIndex(p => !used.has(p.id) && normLine(p.subLine) === r);
+                if (idx >= 0) { const p = team[idx]; used.add(p.id); assignment[r] = p.id; }
+            }
+            for (const r of roles) {
+                if (assignment[r]) continue;
+                const idx = team.findIndex(p => !used.has(p.id) && (normLine(p.mainLine) === 'A' || normLine(p.subLine) === 'A'));
+                if (idx >= 0) { const p = team[idx]; used.add(p.id); assignment[r] = p.id; }
+            }
+            const coveredRoles = Object.keys(assignment).length;
+            return { coveredRoles, primaryAssigned, assignment };
+        }
+
+        // 팀 분할 평가(값이 클수록 좋음)
+        function scoreSplit(t1, t2, mode, allowDiff) {
+            const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+            const stdev = a => { const m = mean(a); return a.length ? Math.sqrt(a.reduce((s, x) => s + (x - m) * (x - m), 0) / a.length) : 0; };
+
+            const m1 = mean(t1.map(p => p.score)), m2 = mean(t2.map(p => p.score));
+            const diff = Math.abs(m1 - m2);
+            const s1 = stdev(t1.map(p => p.score)), s2 = stdev(t2.map(p => p.score));
+
+            // 기본값: 라인 점수 0
+            let coveredTotal = 0, primaryTotal = 0;
+
+            // 라인우선일 때만 라인 배정/커버리지 계산
+            if (mode === 'prefer_line') {
+                const a1 = assignRoles(t1), a2 = assignRoles(t2);
+                coveredTotal = (a1.coveredRoles || 0) + (a2.coveredRoles || 0);
+                primaryTotal = (a1.primaryAssigned || 0) + (a2.primaryAssigned || 0);
+            }
+
+            // 모드별 파라미터
+            let wCover = 0, wPrimary = 0, jitterAmp = 1.5, diversityW = 1.5, allowBoost = 1.0, mmrDiv = 180;
+
+            if (mode === 'prefer_line') {
+                wCover = 12; wPrimary = 4; jitterAmp = 0.8; diversityW = 1.2; allowBoost = 1.0; mmrDiv = 120;
+            } else if (mode === 'prefer_mmr') {
+                // 라인 영향 0, 다양성 강하게, 랜덤성 크게
+                wCover = 0; wPrimary = 0; jitterAmp = 5.0; diversityW = 5.0; allowBoost = 1.8; mmrDiv = 280;
+            }
+
+            // 허용치 초과 MMR 페널티(완만)
+            const over = Math.max(0, diff - allowDiff * allowBoost);
+            const mmrPenalty = (over * over) / mmrDiv;
+
+            // 분산 차이 약벌점
+            const spreadPenalty = Math.abs(s1 - s2) * 0.18;
+
+            // 히스토리 기반 다양성 패널티 + 동일조합 실격
+            const t1Ids = t1.map(p => p.id), t2Ids = t2.map(p => p.id);
+            const sameSideMax = countSameSideMulti(t1Ids, t2Ids);
+            const total = (t1Ids.length + t2Ids.length) || 1;
+            const identicalPenalty = (sameSideMax === total) ? 1e6 : 0; // 완전 동일 금지
+            const diversityPenalty = sameSideMax * diversityW;
+
+            const jitter = (Math.random() - 0.5) * jitterAmp;
+
+            return coveredTotal * wCover + primaryTotal * wPrimary
+                - mmrPenalty - spreadPenalty - diversityPenalty - identicalPenalty + jitter;
+        }
+
+
+
+
+
+        // 랜덤 스왑 로컬탐색
+        function improveBySwaps(pick, playersById, mode, allowDiff, rounds = 260, temp = 1.4, minChange = 2) {
+            let best = JSON.parse(JSON.stringify(pick));
+            let bestScore = (() => {
+                const t1 = best.team1.map(id => playersById.get(id));
+                const t2 = best.team2.map(id => playersById.get(id));
+                return scoreSplit(t1, t2, mode, allowDiff);
+            })();
+
+            let ids1 = best.team1.slice();
+            let ids2 = best.team2.slice();
+
+            for (let r = 0; r < rounds; r++) {
+                const i = (Math.random() * ids1.length) | 0;
+                const j = (Math.random() * ids2.length) | 0;
+                [ids1[i], ids2[j]] = [ids2[j], ids1[i]];
+
+                const t1 = ids1.map(id => playersById.get(id));
+                const t2 = ids2.map(id => playersById.get(id));
+                let sc = scoreSplit(t1, t2, mode, allowDiff);
+
+                // 최소 변경 인원 미만이면 큰 감점(강제로 바뀌게)
+                const sameRatio = similarityWithLast(ids1, ids2, lastTeams);
+                const total = ids1.length + ids2.length;
+                const changed = total - countSameSide(ids1, ids2, lastTeams);
+                if (changed < minChange) sc -= (minChange - changed) * 15; // 강한 페널티
+
+                const delta = sc - bestScore;
+                if (delta >= 0 || Math.exp(delta / Math.max(0.001, temp)) > Math.random()) {
+                    bestScore = sc;
+                    best.team1 = ids1.slice();
+                    best.team2 = ids2.slice();
+                } else {
+                    [ids1[i], ids2[j]] = [ids2[j], ids1[i]];
+                }
+                temp *= 0.996;
+            }
+            return best;
+        }
+
+        // ===== 팀 자동 빌드(강화 및 다양성 보장) =====
+        // ===== 팀 자동 빌드(강화 및 다양성 보장) =====
+        function buildBalancedTeams(players, mode = 'prefer_line') {
+            const n = players.length, half = n / 2;
+            const idx = [...Array(n).keys()];
+            const allowDiff = Math.max(0, Math.round(Number(mmrToleranceInput?.value || 120)));
+            const strength = (mixStrengthSel?.value || 'normal');
+
+            // 모드별 파라미터
+            let attemptsBase, swapBase, tempBase, minChangeDiv;
+            if (mode === 'prefer_line') {
+                attemptsBase = 900; swapBase = 320; tempBase = 1.5; minChangeDiv = 4;
+            } else if (mode === 'prefer_mmr') {
+                // 더 강하게 흔들기
+                attemptsBase = 2000; swapBase = 800; tempBase = 3.0; minChangeDiv = 2;
+            }
+
+            const attempts = Math.min((strength === 'strong' ? attemptsBase * 2 : attemptsBase) * n, 30000);
+            const swapRounds = (strength === 'strong' ? Math.round(swapBase * 1.4) : swapBase);
+            const initTemp = (strength === 'strong' ? tempBase * 1.2 : tempBase);
+
+            const totalSelected = n;
+            const minChange = Math.max(2, Math.floor(totalSelected / minChangeDiv));
+
+            // ✅ 평가 전용 배열(실제 점수는 변경 없음)
+            let evalPlayers = players.map(p => p);
+            if (mode === 'prefer_mmr') {
+                evalPlayers = players.map(p => ({
+                    ...p,
+                    score: p.score + (Math.random() - 0.5) * 20 // ±10~30 정도로 조정 가능
+                }));
+            }
+
+            const playersById = new Map(evalPlayers.map(p => [p.id, p]));
+
+            let bestPick = null, bestScore = -Infinity;
+
+            for (let i = 0; i < attempts; i++) {
+                shuffle(idx);
+                const t1Idx = idx.slice(0, half), t2Idx = idx.slice(half, n);
+
+                let cand1 = t1Idx.map(i => evalPlayers[i]);
+                let cand2 = t2Idx.map(i => evalPlayers[i]);
+
+                let sc = scoreSplit(cand1, cand2, mode, allowDiff);
+
+                // 히스토리/최소 변경 인원 기반 패널티
+                const sameCount = countSameSideMulti(cand1.map(p => p.id), cand2.map(p => p.id));
+                const changed = (cand1.length + cand2.length) - sameCount;
+                if (changed < minChange) sc -= (minChange - changed) * 20;
+
+                if (sc > bestScore) {
+                    bestScore = sc;
+                    bestPick = { team1: cand1.map(p => p.id), team2: cand2.map(p => p.id) };
+
+                    if (mode === 'prefer_line') {
+                        const a1 = assignRoles(cand1), a2 = assignRoles(cand2);
+                        if ((a1.coveredRoles || 0) + (a2.coveredRoles || 0) === 10) break;
+                    }
+                }
+            }
+
+            if (!bestPick) {
+                return { team1: evalPlayers.slice(0, half).map(p => p.id), team2: evalPlayers.slice(half).map(p => p.id) };
+            }
+
+            bestPick = improveBySwaps(bestPick, playersById, mode, allowDiff, swapRounds, initTemp, minChange);
+
+            // 마지막 보정(여전히 같은 편 유지가 많으면 강제 스왑)
+            const total = bestPick.team1.length + bestPick.team2.length;
+            let changed = total - countSameSideMulti(bestPick.team1, bestPick.team2);
+            if (changed < minChange) {
+                const need = minChange - changed;
+                for (let k = 0; k < need; k++) {
+                    const i = (Math.random() * bestPick.team1.length) | 0;
+                    const j = (Math.random() * bestPick.team2.length) | 0;
+                    [bestPick.team1[i], bestPick.team2[j]] = [bestPick.team2[j], bestPick.team1[i]];
+                }
+                // 선택(조금 더 꼬기): MMR우선이면 추가 랜덤 교차
+                if (mode === 'prefer_mmr') {
+                    for (let k = 0; k < bestPick.team1.length; k++) {
+                        if (Math.random() < 0.3) {
+                            const i = (Math.random() * bestPick.team1.length) | 0;
+                            const j = (Math.random() * bestPick.team2.length) | 0;
+                            [bestPick.team1[i], bestPick.team2[j]] = [bestPick.team2[j], bestPick.team1[i]];
+                        }
+                    }
+                }
+            }
+
+            return bestPick;
+        }
+
+
+
+
+
+        function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0;[a[i], a[j]] = [a[j], a[i]]; } }
+
+        // ===== 로스터 렌더(정렬 + 검색 필터 + 하이라이트) =====
+        function renderRoster() {
+            const key = (rosterSortSel && rosterSortSel.value) || 'name';
+            const term = rosterSearchTerm.trim();
+            const termLower = term.toLowerCase();
+
+            const sorted = roster.slice().sort((a, b) => {
+                if (key === 'name') return a.name.localeCompare(b.name, 'ko');
+                if (key === 'wr') return (winRate(b) - winRate(a)) || a.name.localeCompare(b.name, 'ko');
+                if (key === 'score') return (b.score - a.score) || a.name.localeCompare(b.name, 'ko');
+                return 0;
+            });
+
+            const list = term
+                ? sorted.filter(p => p.name.toLowerCase().includes(termLower))
+                : sorted;
+
+            if (rosterSearchCount) {
+                rosterSearchCount.textContent = term
+                    ? `검색 결과 ${list.length}명 / 전체 ${roster.length}명`
+                    : `전체 ${roster.length}명`;
+            }
+
+            rosterBody.innerHTML = '';
+            list.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.setAttribute('draggable', 'true'); tr.dataset.id = p.id;
+                const rate = winRate(p);
+                const p1 = normLine(p.mainLine || 'A');
+                const p2 = normLine(p.subLine || 'A');
+
+                const safeName = escapeHtml(p.name);
+                const highlighted = term
+                    ? safeName.replace(new RegExp(`(${escapeRegExp(escapeHtml(term))})`, 'gi'), '<mark>$1</mark>')
+                    : safeName;
+
+                tr.innerHTML = `
+                    <td><input type="checkbox" data-id="${p.id}" class="rowcheck"></td>
+                    <td class="cell-name" data-id="${p.id}" title="더블클릭으로 이름 수정">${highlighted}</td>
+                    <td class="cell-line">
+                        <select class="line-select cell-line1" data-id="${p.id}" title="주 라인">${lineOptionsHTML(p1)}</select>
+                        <span class="line-slash">/</span>
+                        <select class="line-select cell-line2" data-id="${p.id}" title="부 라인">${lineOptionsHTML(p2)}</select>
+                    </td>
+                    <td class="tabnum"><input data-id="${p.id}" class="cell-score" type="number" value="${p.score}" /></td>
+                    <td class="tabnum"><input data-id="${p.id}" class="cell-games" type="number" min="0" value="${Number(p.games) || 0}" /></td>
+                    <td class="tabnum"><span class="wl-badge" data-id="${p.id}">${Number(p.wins) || 0}/${Number(p.losses) || 0}</span></td>
+                    <td class="tabnum"><span class="wr-badge ${wrClass(rate)}" data-id="${p.id}">${rate}%</span></td>
+                `;
+                rosterBody.appendChild(tr);
+            });
+
+            if (checkAll) checkAll.checked = false;
+        }
+
+        // 값 변경 핸들링
+        rosterBody.addEventListener('change', e => {
+            const t = e.target;
+            if (t.classList.contains('cell-line1') || t.classList.contains('cell-line2')) {
+                const id = t.dataset.id; const p = roster.find(x => x.id === id); if (!p) return;
+                if (t.classList.contains('cell-line1')) p.mainLine = normLine(t.value);
+                if (t.classList.contains('cell-line2')) p.subLine = normLine(t.value);
+                saveLocal(); return;
+            }
+            if (t.classList.contains('cell-score') || t.classList.contains('cell-games')) {
+                const id = t.dataset.id; const p = roster.find(x => x.id === id); if (!p) return;
+                if (t.classList.contains('cell-score')) { const v = Number(t.value || 0); p.score = isFinite(v) ? v : p.score; }
+                else { const g = Math.max(0, Math.floor(Number(t.value || 0))); p.games = g; }
+                saveLocal(); renderTeams();
+            }
+        });
+
+        // 드래그 시작
+        rosterBody.addEventListener('dragstart', e => {
+            const row = e.target.closest('tr'); if (!row || !row.dataset.id) return;
+            e.dataTransfer.setData('text/plain', row.dataset.id);
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        // 승패 초기화(더블클릭)
+        rosterBody.addEventListener('dblclick', e => {
+            const wl = e.target.closest('.wl-badge');
+            if (wl) {
+                const id = wl.dataset.id;
+                const p = roster.find(x => x.id === id);
+                if (!p) return;
+                if (confirm(`"${p.name}"의 승패를 초기화하시겠습니까?`)) {
+                    p.wins = 0; p.losses = 0;
+                    saveLocal(); renderRoster(); renderTeams();
+                }
+            }
+        });
+
+        // ===== 팀 렌더 (정렬 포함) =====
+        function renderTeams() {
+            const t1 = currentTeams.team1.map(id => roster.find(p => p.id === id)).filter(Boolean);
+            const t2 = currentTeams.team2.map(id => roster.find(p => p.id === id)).filter(Boolean);
+
+            const a1 = avg(t1.map(p => p.score)), a2 = avg(t2.map(p => p.score));
+            document.getElementById('avg1').innerHTML = `평균 <span class="${a1 >= a2 ? 'good' : 'bad'}">${a1.toFixed(1)}</span>`;
+            document.getElementById('avg2').innerHTML = `평균 <span class="${a2 >= a1 ? 'good' : 'bad'}">${a2.toFixed(1)}</span>`;
+
+            const sortKey = (teamSortSel && teamSortSel.value) || 'name';
+            const cmp = (a, b) => {
+                if (sortKey === 'name') return a.name.localeCompare(b.name, 'ko');
+                if (sortKey === 'line') return linePair(a).localeCompare(linePair(b));
+                if (sortKey === 'wr') return (winRate(b) - winRate(a)) || a.name.localeCompare(b.name, 'ko');
+                if (sortKey === 'score') return (b.score - a.score) || a.name.localeCompare(b.name, 'ko');
+                return 0;
+            };
+            t1.sort(cmp); t2.sort(cmp);
+
+            team1UL.innerHTML = ''; team2UL.innerHTML = '';
+            const makeRow = p => {
+                const wr = winRate(p);
+                const row = document.createElement('li');
+                row.className = 'teamRow'; row.setAttribute('draggable', 'true'); row.dataset.id = p.id;
+                row.innerHTML = `
+                    <span class="cell-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+                    <span class="cell-line tabnum" title="${LINE_TITLE[normLine(p.mainLine)]}/${LINE_TITLE[normLine(p.subLine)]}">${linePair(p)}</span>
+                    <span class="cell-wr tabnum ${wrClass(wr)}">${wr}%</span>
+                    <span class="cell-score tabnum">${p.score}</span>
+                `;
+                row.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', p.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                return row;
+            };
+            t1.forEach(p => team1UL.appendChild(makeRow(p)));
+            t2.forEach(p => team2UL.appendChild(makeRow(p)));
+        }
+
+        // 드롭 타겟
+        function bindDropTarget(ulEl, boxEl, teamNo) {
+            const onDragOver = e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
+            const onDragEnter = () => boxEl.classList.add('drop-target');
+            const onDragLeave = e => { if (!boxEl.contains(e.relatedTarget)) boxEl.classList.remove('drop-target'); };
+            const onDrop = e => {
+                e.preventDefault(); boxEl.classList.remove('drop-target');
+                const id = e.dataTransfer.getData('text/plain'); if (!id) return; addIdToTeam(teamNo, id);
+            };
+            ulEl.addEventListener('dragover', onDragOver);
+            ulEl.addEventListener('dragenter', onDragEnter);
+            ulEl.addEventListener('dragleave', onDragLeave);
+            ulEl.addEventListener('drop', onDrop);
+            boxEl.addEventListener('dragover', onDragOver);
+            boxEl.addEventListener('dragenter', onDragEnter);
+            boxEl.addEventListener('dragleave', onDragLeave);
+            boxEl.addEventListener('drop', onDrop);
+        }
+        bindDropTarget(team1UL, team1Box, 1);
+        bindDropTarget(team2UL, team2Box, 2);
+
+        // 인원 관리 테이블 드롭 (팀에서 제거)
+        rosterBody.addEventListener('dragover', e => { e.preventDefault(); rosterBody.classList.add('drop-target'); });
+        rosterBody.addEventListener('dragleave', e => { if (!rosterBody.contains(e.relatedTarget)) rosterBody.classList.remove('drop-target'); });
+        rosterBody.addEventListener('drop', e => {
+            e.preventDefault(); rosterBody.classList.remove('drop-target');
+            const id = e.dataTransfer.getData('text/plain'); if (!id) return;
+            currentTeams.team1 = currentTeams.team1.filter(x => x !== id);
+            currentTeams.team2 = currentTeams.team2.filter(x => x !== id);
+            renderTeams();
+        });
+
+        function addIdToTeam(teamNo, id) {
+            if (!id) return;
+            const other = teamNo === 1 ? currentTeams.team2 : currentTeams.team1;
+            const target = teamNo === 1 ? currentTeams.team1 : currentTeams.team2;
+            const otherSet = new Set(other), targetSet = new Set(target);
+            if (otherSet.has(id)) otherSet.delete(id);
+            targetSet.add(id);
+            if (teamNo === 1) { currentTeams.team2 = [...otherSet]; currentTeams.team1 = [...targetSet]; }
+            else { currentTeams.team1 = [...otherSet]; currentTeams.team2 = [...targetSet]; }
+            renderTeams();
+        }
+
+        // ===== 인원 추가/삭제 =====
+        document.getElementById('btnAdd').addEventListener('click', () => {
+            let name = (nameInput.value || '').trim();
+            const score = Number(scoreInput.value || 0);
+            const pLine = normLine(linePrimaryInput?.value || 'A');
+            const sLine = normLine(lineSecondaryInput?.value || 'A');
+
+            if (!name) {
+                alert('이름을 입력하세요.');
+                nameInput.focus(); return;
+            }
+            if (name.length > 16) {
+                alert('이름은 최대 16자까지만 가능합니다. 초과분은 잘립니다.');
+                name = name.slice(0, 16);
+            }
+
+            roster.push({ id: uid(), name, score: isFinite(score) ? score : 0, games: 0, wins: 0, losses: 0, mainLine: pLine, subLine: sLine });
+            saveLocal(); renderRoster(); renderTeams();
+            nameInput.value = ''; scoreInput.value = '1000'; if (linePrimaryInput) linePrimaryInput.value = 'A'; if (lineSecondaryInput) lineSecondaryInput.value = 'A'; nameInput.focus();
+        });
+
+        document.getElementById('btnDelete').addEventListener('click', () => {
+            const checks = [...document.querySelectorAll('.rowcheck:checked')];
+            if (!checks.length) { alert('삭제할 인원을 선택하세요.'); return; }
+            const selected = checks.map(c => roster.find(p => p.id === c.dataset.id)).filter(Boolean);
+            const msg = selected.length === 1 ? `정말로 "${selected[0].name}" 멤버를 삭제하시겠습니까?`
+                : `정말로 다음 ${selected.length}명을 삭제하시겠습니까?\n` + selected.map(p => p.name).join(', ');
+            if (!confirm(msg)) return;
+            const ids = new Set(selected.map(p => p.id));
+            roster = roster.filter(p => !ids.has(p.id));
+            currentTeams.team1 = currentTeams.team1.filter(id => !ids.has(id));
+            currentTeams.team2 = currentTeams.team2.filter(id => !ids.has(id));
+            saveLocal(); renderRoster(); renderTeams();
+        });
+
+        // 이름 더블클릭 -> 수정
+        rosterBody.addEventListener('dblclick', e => {
+            const td = e.target.closest('.cell-name'); if (!td) return;
+            const id = td.dataset.id; const p = roster.find(x => x.id === id); if (!p) return;
+            let newName = prompt('이름 수정 (최대 16자)', p.name);
+            if (newName != null) {
+                newName = newName.trim().slice(0, 16);
+                if (!newName) { alert('이름이 비었습니다.'); return; }
+                p.name = newName; saveLocal(); renderRoster(); renderTeams();
+            }
+        });
+
+        // 전체선택
+        checkAll.addEventListener('change', () => { document.querySelectorAll('.rowcheck').forEach(cb => cb.checked = checkAll.checked); });
+
+        // 파일 저장/불러오기
+        document.getElementById('btnSave').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(roster, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob); const a = document.createElement('a');
+            const now = new Date(), pad = n => String(n).padStart(2, '0');
+            const filename = `${now.getFullYear()}_${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.txt`;
+            a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('btnLoad').addEventListener('click', () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (!f) { alert('불러올 파일을 선택하세요.'); fileInput.click(); return; }
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const text = String(reader.result || ''); let data;
+                    if (text.trim().startsWith('[') || text.trim().startsWith('{')) data = JSON.parse(text);
+                    else {
+                        data = text.split(/\r?\n/).map(line => {
+                            if (!line.trim()) return null;
+                            const parts = line.split(',').map(s => s.trim());
+                            const name = parts[0]; if (!name) return null;
+                            return {
+                                name, score: Number(parts[1]) || 0,
+                                games: parts[2] != null ? Math.max(0, Math.floor(Number(parts[2]) || 0)) : 0,
+                                wins: parts[3] != null ? Math.max(0, Math.floor(Number(parts[3]) || 0)) : 0,
+                                losses: parts[4] != null ? Math.max(0, Math.floor(Number(parts[4]) || 0)) : 0,
+                                mainLine: normLine(parts[5] || 'A'), subLine: normLine(parts[6] || 'A'),
+                            };
+                        }).filter(Boolean);
+                    }
+                    if (!Array.isArray(data)) data = [data];
+                    roster = data.map(it => ({
+                        id: uid(), name: String(it.name || '').slice(0, 16),
+                        score: Number(it.score) || 0, games: Math.max(0, Math.floor(Number(it.games) || 0)),
+                        wins: Math.max(0, Math.floor(Number(it.wins) || 0)), losses: Math.max(0, Math.floor(Number(it.losses) || 0)),
+                        mainLine: normLine(it.mainLine), subLine: normLine(it.subLine),
+                    })).filter(x => x.name);
+                    const validIds = new Set(roster.map(p => p.id));
+                    currentTeams.team1 = currentTeams.team1.filter(id => validIds.has(id));
+                    currentTeams.team2 = currentTeams.team2.filter(id => validIds.has(id));
+                    saveLocal(); renderRoster(); renderTeams();
+                } catch (err) { console.error(err); alert('불러오기 실패: 파일 형식을 확인하세요.'); }
+            };
+            reader.readAsText(f, 'utf-8');
+        });
+
+        // 팀 빌드/리메이크/정렬 변경 트리거
+        function teamsAlmostSame(a, b) {
+            const setA1 = new Set(a.team1), setA2 = new Set(a.team2);
+            let same = 0, total = (a.team1.length + a.team2.length) || 1;
+            for (const id of b.team1) if (setA1.has(id)) same++;
+            for (const id of b.team2) if (setA2.has(id)) same++;
+            return (same / total) >= 0.85; // 90% 이상 같으면 '거의 동일'
+        }
+
+        document.getElementById('btnMakeTeams').addEventListener('click', () => {
+            const selected = [...document.querySelectorAll('.rowcheck:checked')].map(cb => cb.dataset.id);
+            if (selected.length < 2 || selected.length % 2 !== 0) { alert('짝수 인원을 선택하세요. (현재 ' + selected.length + '명)'); return; }
+            const players = selected.map(id => roster.find(p => p.id === id)).filter(Boolean);
+            const mode = (balanceModeSel && balanceModeSel.value) || 'prefer_line';
+
+            let first = buildBalancedTeams(players, mode);
+
+            // 안티-스턱: 거의 같으면 허용치+강도 임시상향 후 1회 재시도
+            if (teamsAlmostSame(first, lastTeams) && (mode !== 'prefer_line')) {
+                const bak = mmrToleranceInput.value;
+                mmrToleranceInput.value = String(Number(bak || 120) * 1.5 | 0);
+                const bakStrength = mixStrengthSel.value;
+                mixStrengthSel.value = 'strong';
+                first = buildBalancedTeams(players, mode);
+                mmrToleranceInput.value = bak;
+                mixStrengthSel.value = bakStrength;
+            }
+
+            currentTeams = first;
+            renderTeams();
+            lastTeams = JSON.parse(JSON.stringify(currentTeams));
+        });
+        document.getElementById('btnRemakeTeams').addEventListener('click', () => {
+            const ids1 = currentTeams.team1 || [], ids2 = currentTeams.team2 || [];
+            const all = [...ids1, ...ids2];
+            if (all.length < 2 || all.length % 2 !== 0) { alert('먼저 짝수 인원으로 팀을 만들어주세요. (현재 ' + all.length + '명)'); return; }
+            const players = all.map(id => roster.find(p => p.id === id)).filter(Boolean);
+            if (players.length !== all.length) { alert('일부 멤버가 목록에서 사라졌습니다. 다시 선택해서 팀을 만들어주세요.'); return; }
+            const mode = (balanceModeSel && balanceModeSel.value) || 'prefer_line';
+            currentTeams = buildBalancedTeams(players, mode);
+            renderTeams();
+            lastTeams = JSON.parse(JSON.stringify(currentTeams));
+        });
+        teamSortSel.addEventListener('change', renderTeams);
+        rosterSortSel.addEventListener('change', renderRoster);
+
+        document.getElementById('btnClearTeams').addEventListener('click', () => {
+            currentTeams = { team1: [], team2: [] };
+            lastTeams = { team1: [], team2: [] }; // 다양성 기준도 리셋
+            renderTeams();
+            document.getElementById('avg1').textContent = '평균 0';
+            document.getElementById('avg2').textContent = '평균 0';
+        });
+
+        // 선택 이동/제거
+        document.getElementById('btnToTeam1').addEventListener('click', () => addSelectedToTeam(1));
+        document.getElementById('btnToTeam2').addEventListener('click', () => addSelectedToTeam(2));
+        document.getElementById('btnRemoveFromTeams').addEventListener('click', removeSelectedFromTeams);
+        function addSelectedToTeam(teamNo) {
+            const checks = [...document.querySelectorAll('.rowcheck:checked')];
+            if (!checks.length) { alert('팀에 넣을 인원을 체크하세요.'); return; }
+            const ids = checks.map(c => c.dataset.id); ids.forEach(id => addIdToTeam(teamNo, id));
+        }
+        function removeSelectedFromTeams() {
+            const checks = [...document.querySelectorAll('.rowcheck:checked')];
+            if (!checks.length) { alert('팀에서 제거할 인원을 체크하세요.'); return; }
+            const ids = new Set(checks.map(c => c.dataset.id));
+            currentTeams.team1 = currentTeams.team1.filter(id => !ids.has(id));
+            currentTeams.team2 = currentTeams.team2.filter(id => !ids.has(id));
+            renderTeams();
+        }
+
+        // 승패 반영 (확인 팝업)
+        function confirmAndApply(winTeam) {
+            const n1 = currentTeams.team1.length;
+            const n2 = currentTeams.team2.length;
+            if (n1 === 0 || n2 === 0 || n1 !== n2) {
+                alert('먼저 짝수 인원으로 팀을 만들어주세요.');
+                return;
+            }
+            const msg = `${winTeam === 1 ? '1팀 승리' : '2팀 승리'}로 점수를 반영할까요?`;
+            if (confirm(msg)) applyResult(winTeam);
+        }
+        document.getElementById('btnWin1').addEventListener('click', () => confirmAndApply(1));
+        document.getElementById('btnWin2').addEventListener('click', () => confirmAndApply(2));
+
+        function applyResult(winTeam) {
+            const ids1 = new Set(currentTeams.team1), ids2 = new Set(currentTeams.team2);
+            if (ids1.size === 0 || ids2.size === 0 || ids1.size !== ids2.size) { alert('먼저 짝수 인원으로 팀을 만들어주세요.'); return; }
+            const team1 = roster.filter(p => ids1.has(p.id)), team2 = roster.filter(p => ids2.has(p.id));
+            const mode = (scoringModeSel && scoringModeSel.value) || 'fixed';
+            if (mode === 'elo') {
+                const R1 = avg(team1.map(p => p.score)), R2 = avg(team2.map(p => p.score));
+                const E1 = 1 / (1 + Math.pow(10, (R2 - R1) / 400)), E2 = 1 - E1;
+                const K = Math.round(Number(eloKInput && eloKInput.value ? eloKInput.value : 32)) || 32;
+                const S1 = (winTeam === 1 ? 1 : 0), S2 = (winTeam === 2 ? 1 : 0);
+                const d1 = K * (S1 - E1), d2 = K * (S2 - E2);
+                team1.forEach(p => {
+                    const mult = isPlacement(p.games) ? 2 : 1; p.score = Math.round(clamp(p.score + d1 * mult, -9999, 9999));
+                    p.games = (p.games || 0) + 1; if (winTeam === 1) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
+                });
+                team2.forEach(p => {
+                    const mult = isPlacement(p.games) ? 2 : 1; p.score = Math.round(clamp(p.score + d2 * mult, -9999, 9999));
+                    p.games = (p.games || 0) + 1; if (winTeam === 2) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
+                });
+            } else {
+                const delta = Math.round(Number(winBonusInput && winBonusInput.value ? winBonusInput.value : 10)) || 10;
+                roster.forEach(p => {
+                    const in1 = ids1.has(p.id), in2 = ids2.has(p.id); if (!in1 && !in2) return;
+                    const mult = isPlacement(p.games) ? 2 : 1;
+                    if (in1) p.score += (winTeam === 1 ? delta * mult : -delta * mult);
+                    if (in2) p.score += (winTeam === 2 ? delta * mult : -delta * mult);
+                    p.score = Math.round(clamp(p.score, -9999, 9999)); p.games = (p.games || 0) + 1;
+                    if (in1) { if (winTeam === 1) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1; }
+                    if (in2) { if (winTeam === 2) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1; }
+                });
+            }
+            saveLocal(); renderRoster(); renderTeams();
+        }
+
+        // ===== 검색 입력(디바운스) =====
+        let _searchTimer = null;
+        function setSearchTerm(v) {
+            rosterSearchTerm = (v || '').slice(0, 50);
+            renderRoster();
+        }
+        if (rosterSearchInput) {
+            rosterSearchInput.addEventListener('input', (e) => {
+                const v = e.target.value;
+                clearTimeout(_searchTimer);
+                _searchTimer = setTimeout(() => setSearchTerm(v), 120);
+            });
+            rosterSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    setSearchTerm(e.target.value);
+                }
+            });
+        }
+        if (rosterSearchClear) {
+            rosterSearchClear.addEventListener('click', () => {
+                rosterSearchInput.value = '';
+                setSearchTerm('');
+                rosterSearchInput.focus();
+            });
+        }
+
+        // 초기화
+        function initPrefs() {
+            try { const savedBonus = localStorage.getItem(WIN_BONUS_KEY); if (savedBonus && winBonusInput) winBonusInput.value = String(Math.round(Number(savedBonus) || 10)); } catch (_) { }
+            if (winBonusInput) { winBonusInput.addEventListener('change', () => { const v = Math.round(Number(winBonusInput.value) || 10); winBonusInput.value = String(v); try { localStorage.setItem(WIN_BONUS_KEY, String(v)); } catch (_) { } }); }
+            try {
+                const savedMode = localStorage.getItem(MODE_KEY); if (savedMode && scoringModeSel) scoringModeSel.value = savedMode;
+                const savedK = localStorage.getItem(ELO_K_KEY); if (savedK && eloKInput) eloKInput.value = String(Math.round(Number(savedK) || 32));
+            } catch (_) { }
+            if (scoringModeSel) { scoringModeSel.addEventListener('change', () => { try { localStorage.setItem(MODE_KEY, scoringModeSel.value); } catch (_) { } }); }
+            if (eloKInput) { eloKInput.addEventListener('change', () => { const v = Math.round(Number(eloKInput.value) || 32); eloKInput.value = String(v); try { localStorage.setItem(ELO_K_KEY, String(v)); } catch (_) { } }); }
+        }
+
+        loadLocal(); initPrefs();
+        roster = roster.map(p => ({ ...p, mainLine: normLine(p.mainLine || 'A'), subLine: normLine(p.subLine || 'A') }));
+        saveLocal();
+        renderRoster(); renderTeams();
+    </script>
+</body>
+
+</html>

@@ -2209,19 +2209,21 @@
 
             // 중심에서 살짝 위쪽에서 터지면 보기 좋음
             const originX = canvas.width * 0.5;
-            const originY = canvas.height * 0.35;
+            const originY = canvas.height * 1;
 
             // 확~ 퍼지게 하는 튜닝값
-            const POWER = 1.6;         // 초기속도 배율
-            const BASE_SPEED = 4;      // 기본 속도
-            const SPEED_VAR = 4;       // 속도 가변폭
+            const POWER = 1.5;         // 초기속도 배율
+            const BASE_SPEED = 5;      // 기본 속도
+            const SPEED_VAR = 8;       // 속도 가변폭
             const GRAVITY_MIN = 0.08;  // 중력 범위(낮출수록 더 오래/멀리)
             const GRAVITY_VAR = 0.08;
             const AIR_DRAG = 0.97;    // 공기저항(1에 가까우면 오래감)
 
             // 파티클 생성(360도 확산)
             const particles = Array.from({ length: count }, () => {
-                const theta = Math.random() * Math.PI * 2; // 0~360도
+                const CENTER_DEG = -90; 
+                const SPREAD_DEG = 180;  
+                const theta = ((CENTER_DEG - SPREAD_DEG / 2) + Math.random() * SPREAD_DEG) * Math.PI / 180;
                 const speed = (BASE_SPEED + Math.random() * SPEED_VAR) * POWER * dpr;
                 return {
                     x: originX,

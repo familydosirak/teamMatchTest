@@ -152,7 +152,15 @@
             border-radius: 14px;
             padding: 12px;
             background: linear-gradient(180deg, #0c1626, #0c1422);
-            min-width: 0
+            min-width: 0;
+            position: relative;
+        }
+
+        .confetti-canvas {
+            position: absolute;
+            inset: 0;
+            /* top/right/bottom/left: 0 */
+            pointer-events: none;
         }
 
         .team h3 {
@@ -180,7 +188,7 @@
         /* 팀 행 */
         .teamRow {
             display: grid;
-            grid-template-columns: minmax(12ch, 1fr) 80px 70px minmax(60px, max-content);
+            grid-template-columns: minmax(12ch, 1fr) 8ch 6ch 14ch;
             gap: 8px;
             padding: 10px 14px;
             background: #0e1a2a;
@@ -216,15 +224,18 @@
         }
 
         .teamRow .cell-score {
-            text-align: right;
-            justify-self: end;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 6px;
             white-space: nowrap;
-            min-width: 60px;
         }
 
         .tabnum {
             font-variant-numeric: tabular-nums;
-            font-feature-settings: "tnum" 1
+            font-feature-settings: "tnum" 1;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                "Liberation Mono", "Courier New", monospace;
         }
 
         .avg {
@@ -245,6 +256,35 @@
             flex-wrap: wrap;
             align-items: center;
             min-width: 0
+        }
+
+        .winbar-left {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .winbar-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width:640px) {
+            .winbar .wins {
+                margin-left: 0;
+            }
+        }
+
+        .winbar .wins {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
         }
 
         .winbar label {
@@ -312,8 +352,8 @@
         }
 
         .rbody tbody tr {
-            background: linear-gradient(180deg, #0b1422, #0a111c);
-            border: 1px solid #1c2b45
+            background: #0b1422;
+            border: 1px solid #1c2b45;
         }
 
         .rbody tbody tr td {
@@ -347,6 +387,18 @@
             gap: 6px
         }
 
+        .cell-score .score-num {
+            display: inline-block;
+            width: 8ch;
+            text-align: right;
+        }
+
+        .cell-score .delta {
+            display: inline-block;
+            min-width: 5ch;
+            text-align: right;
+        }
+
         .line-select {
             width: 54px;
             height: 30px;
@@ -367,7 +419,7 @@
 
         .wl-badge,
         .wr-badge {
-            font-size: 11px;
+            font-size: 14px;
             opacity: .85
         }
 
@@ -426,24 +478,6 @@
             border-radius: 3px;
         }
 
-        .footer-note {
-            text-align: center;
-            margin-top: 18px;
-            padding-top: 10px;
-            border-top: 1px solid #1c2b45;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .footer-note a {
-            color: #9db7d9;
-            text-decoration: none;
-        }
-
-        .footer-note a:hover {
-            text-decoration: underline;
-        }
-
         #managePanel.dragover {
             outline: 2px dashed var(--acc);
             outline-offset: -6px;
@@ -462,7 +496,120 @@
             margin-left: 4px;
             opacity: .9;
         }
+
+        /* === Thin Footer - centered & 3-line layout === */
+        .site-footer {
+            background: #0b1220;
+            border-top: 1px solid #1c2b45;
+            color: #9bb3cf;
+            font-size: 12px;
+        }
+
+        .site-footer .inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            /* 세로 스택 */
+            align-items: center;
+            /* 가로 가운데 */
+            gap: 6px;
+            text-align: center;
+            /* 텍스트도 가운데 */
+        }
+
+        /* 1줄차: 문의 · 제작 · 버전 */
+        .site-footer .row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            /* 가로 가운데 */
+            align-items: center;
+            gap: 8px;
+        }
+
+        .site-footer .sep {
+            opacity: .6;
+            margin: 0 6px;
+        }
+
+        .site-footer a {
+            color: #9bb3cf;
+            text-decoration: none;
+        }
+
+        .site-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 2줄차: 토글(요약) */
+        .site-footer details {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 요약 가운데 */
+        }
+
+        .site-footer summary {
+            list-style: none;
+            cursor: pointer;
+            color: #9db7d9;
+            font-weight: 700;
+            outline: none;
+            display: inline-block;
+        }
+
+        .site-footer summary::-webkit-details-marker {
+            display: none;
+        }
+
+        /* 3줄차: 열렸을 때 닉네임 칩이 중앙 한 줄(여러 줄로 감싸짐) */
+        .site-footer .chip-wrap {
+            display: none;
+            /* 기본 숨김(닫힘) */
+            justify-content: center;
+            /* 가운데 정렬 */
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .site-footer details[open] .chip-wrap {
+            display: flex;
+        }
+
+        .site-footer .chip {
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid #20304a;
+            background: #0b1220;
+            color: #cfe0fb;
+            white-space: nowrap;
+            font-size: 11px;
+            letter-spacing: .1px;
+            user-select: text;
+        }
+
+        .rbody tbody tr.in-team1 {
+            background: #0b1422;
+            /* 단색 */
+            box-shadow: inset 0 0 0 2px rgba(77, 163, 255, .35);
+            border-color: #234a78;
+        }
+
+        .rbody tbody tr.in-team2 {
+            background: #0b1422;
+            /* 단색 */
+            box-shadow: inset 0 0 0 2px rgba(239, 68, 68, .35);
+            border-color: #5a2330;
+        }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 </head>
 
 <body>
@@ -485,7 +632,7 @@
                             <label class="muted">균형 허용치
                                 <input id="mmrTolerance" type="number" value="120" style="width:90px" />
                             </label>
-                            <label class="muted">섞기 강도
+                            <label class="muted" style="display: none;">섞기 강도
                                 <select id="mixStrength">
                                     <option value="normal" selected>보통</option>
                                     <option value="strong">강함</option>
@@ -514,21 +661,29 @@
                     </div>
 
                     <div class="winbar" style="margin-top:10px">
-                        <div style="width: 100%;">
+                        <div class="winbar-left">
                             <label class="muted">점수 방식
                                 <select id="scoringMode">
                                     <option value="elo">Elo 레이팅</option>
                                     <option value="fixed">고정 가산/감산</option>
                                 </select>
                             </label>
-                            <button class="btn success" id="btnWin1" title="1팀 승">1팀 승리</button>
-                            <button class="btn success" id="btnWin2" title="2팀 승">2팀 승리</button>
+
+                            <label class="muted" id="eloKWrap">Elo K
+                                <input id="eloK" type="number" value="60" />
+                            </label>
+
+                            <label class="muted" id="winBonusWrap">승리 보상
+                                <input id="winBonusInput" type="number" value="30" />
+                            </label>
+
+                            <div class="wins">
+                                <button class="btn success" id="btnWin1" title="1팀 승">1팀 승리</button>
+                                <button class="btn success" id="btnWin2" title="2팀 승">2팀 승리</button>
+                            </div>
                         </div>
 
-                        <label class="muted" id="eloKWrap">Elo K <input id="eloK" type="number" value="60" /></label>
-                        <label class="muted" id="winBonusWrap">승리 보상 <input id="winBonusInput" type="number"
-                                value="30" /></label>
-                        <div style="margin-left:auto;">
+                        <div class="winbar-right">
                             <button class="btn ghost" id="btnCopyTeamsText" title="팀 구성 텍스트 복사">팀 구성 복사</button>
                             <button class="btn primary" id="btnRemakeTeams">현재 멤버로 팀 다시 짜기</button>
                             <button class="btn ghost" id="btnClearTeams">팀 비우기</button>
@@ -632,11 +787,12 @@
                     </div>
                     <div class="listbar" style="padding-bottom:12px">
                         <button class="btn warn" id="btnDelete">인원 삭제(선택)</button>
-                        <button class="btn" id="btnSave">텍스트로 저장</button> <span class="muted">현재 멤버 목록을 저장하여 불러올 수
-                            있습니다.</span>
+                        <button class="btn" id="btnSave">텍스트로 저장</button>
+                        <button class="btn" id="btnExportXLSX">엑셀(XLSX)로 내보내기</button>
+                        <span class="muted">현재 멤버 목록을 저장하여 불러올 수 있습니다.</span>
                     </div>
                     <div class="listbar" style="padding-bottom:12px">
-                        <input id="fileInput" type="file" accept=".txt,.json" />
+                        <input id="fileInput" type="file" accept=".txt,.json,.xlsx" />
                         <button class="btn" id="btnLoad">불러오기</button>
                         <span class="muted">파일을 인원관리 리스트에 드래그하여 불러올 수 있습니다.</span>
                         <div class="muted" style="padding-top:15px;">
@@ -656,9 +812,49 @@
                 </div>
             </div>
         </div>
-        <div class="footer-note">
-            오류 및 문의사항 : <span class="email-text">dosirak2332@daum.net</span>
-        </div>
+        <footer class="site-footer">
+            <div class="inner">
+                <!-- 1줄: 가운데 정렬 -->
+                <div class="row">
+                    <span><strong>문의</strong> : dosirak2332@daum.net</span>
+                    <span class="sep">|</span>
+                    <span><strong>제작</strong> : 도시락</span>
+                </div>
+
+                <!-- 2줄: “테스트 & 도움 주신 분들” 버튼(요약) -->
+                <details>
+                    <summary>테스트 & 도움 주신 분들</summary>
+
+                    <!-- 3줄: 열렸을 때 닉네임 칩 표시 -->
+                    <div class="chip-wrap">
+                        <span class="chip">겨울</span>
+                        <span class="chip">월레스와그로밋</span>
+                        <span class="chip">구름전자</span>
+                        <span class="chip">피스들틱</span>
+                        <span class="chip">DECOx27</span>
+                        <span class="chip">말구섭이</span>
+                        <span class="chip">Poroo</span>
+                        <span class="chip">럭스지키기</span>
+                        <span class="chip">원딜아나대신살아</span>
+                        <span class="chip">13131331</span>
+                        <span class="chip">잠실고졸장재혁</span>
+                        <span class="chip">Manza</span>
+                        <span class="chip">진규호</span>
+                        <span class="chip">KKiinKKiin</span>
+                        <span class="chip">금성</span>
+                        <span class="chip">김밥</span>
+                        <span class="chip">나루</span>
+                        <span class="chip">낸낫노이</span>
+                        <span class="chip">무뇽</span>
+                        <span class="chip">소프트</span>
+                        <span class="chip">유씨</span>
+                        <span class="chip">지망</span>
+                        <span class="chip">지호</span>
+                    </div>
+                </details>
+            </div>
+        </footer>
+
     </div>
 
     <script>
@@ -748,6 +944,9 @@
         const eloKWrap = document.getElementById('eloKWrap');
         const winBonusWrap = document.getElementById('winBonusWrap');
         const managePanel = document.getElementById('managePanel');
+
+        const BALANCE_MODE_KEY = 'balance_mode_v1';
+        const MMR_TOLERANCE_KEY = 'mmr_tolerance_v1';
 
         let rosterSortKey = 'name';   // name | line | score | wl | wr
         let rosterSortAsc = true;     // true: 오름차순, false: 내림차순
@@ -963,6 +1162,9 @@
             const asc = rosterSortAsc ? 1 : -1;
             const term = rosterSearchTerm.trim().toLowerCase();
 
+            const t1Set = new Set(currentTeams.team1 || []);
+            const t2Set = new Set(currentTeams.team2 || []);
+
             const sorted = roster.slice().sort((a, b) => {
                 const byName = a.name.localeCompare(b.name, 'ko');
                 if (key === 'name') return asc * byName;
@@ -1009,6 +1211,8 @@
             rosterBody.innerHTML = '';
             list.forEach(p => {
                 const tr = document.createElement('tr'); tr.setAttribute('draggable', 'true'); tr.dataset.id = p.id;
+                if (t1Set.has(p.id)) tr.classList.add('in-team1');
+                else if (t2Set.has(p.id)) tr.classList.add('in-team2');
                 const rate = winRate(p);
                 const p1 = normLine(p.mainLine || 'A'), p2 = normLine(p.subLine || 'A');
                 const safe = escapeHtml(p.name);
@@ -1055,16 +1259,34 @@
             const makeRow = p => {
                 const wr = winRate(p);
                 const li = document.createElement('li');
-                li.className = 'teamRow'; li.setAttribute('draggable', 'true'); li.dataset.id = p.id;
+                li.className = 'teamRow';
+                li.setAttribute('draggable', 'true');
+                li.dataset.id = p.id;
+
+                const deltaHTML = (typeof p.lastDelta === 'number' && p.lastDelta !== 0)
+                    ? `<span class="delta" style="color:${p.lastDelta > 0 ? '#22c55e' : '#ef4444'};">
+         ${p.lastDelta > 0 ? '+' : ''}${p.lastDelta}
+       </span>`
+                    : '';
+
                 li.innerHTML = `
                     <span class="cell-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
-                    <span class="cell-line tabnum" title="${LINE_TITLE[normLine(p.mainLine)]}/${LINE_TITLE[normLine(p.subLine)]}">${linePair(p)}</span>
+                    <span class="cell-line tabnum" title="${LINE_TITLE[normLine(p.mainLine)]}/${LINE_TITLE[normLine(p.subLine)]}">
+                        ${linePair(p)}
+                    </span>
                     <span class="cell-wr tabnum ${wrClass(wr)}">${wr}%</span>
-                    <span class="cell-score tabnum">${p.score}</span>
+                    <span class="cell-score tabnum">
+    <span class="score-num">${p.score}</span>${deltaHTML}
+  </span>
                 `;
-                li.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', p.id); e.dataTransfer.effectAllowed = 'move'; });
+
+                li.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', p.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
                 return li;
             };
+
             t1.forEach(p => team1UL.appendChild(makeRow(p)));
             t2.forEach(p => team2UL.appendChild(makeRow(p)));
         }
@@ -1095,6 +1317,7 @@
             currentTeams.team1 = currentTeams.team1.filter(x => x !== id);
             currentTeams.team2 = currentTeams.team2.filter(x => x !== id);
             renderTeams();
+            renderRoster();
         });
         rosterBody.addEventListener('dragstart', e => {
             // 입력 요소에서 시작하면 드래그 취소 (편집 방해 방지)
@@ -1120,7 +1343,11 @@
             targetSet.add(id);
             if (teamNo === 1) { currentTeams.team2 = [...otherSet]; currentTeams.team1 = [...targetSet]; }
             else { currentTeams.team1 = [...otherSet]; currentTeams.team2 = [...targetSet]; }
+
+            roster.forEach(p => p.lastDelta = 0);
+
             renderTeams();
+            renderRoster();
         }
 
         /* ============ 이벤트/액션 ============ */
@@ -1260,6 +1487,170 @@
             URL.revokeObjectURL(url);
         });
 
+        // ===== XLSX 내보내기 (Excel) - 현재 정렬 상태 유지, 검색 필터 무시 =====
+
+        // 현재 테이블 정렬 상태(헤더 클릭으로 정한 rosterSortKey/rosterSortAsc)를 그대로 사용
+        function getSortedRosterForExport() {
+            const key = rosterSortKey;
+            const asc = rosterSortAsc ? 1 : -1;
+
+            // 검색어 필터는 내보내지 않으므로 roster 전체를 정렬만 적용
+            const sorted = roster.slice().sort((a, b) => {
+                const byName = a.name.localeCompare(b.name, 'ko');
+
+                if (key === 'name') return asc * byName;
+
+                if (key === 'line') {
+                    const la = (normLine(a.mainLine) + '/' + normLine(a.subLine));
+                    const lb = (normLine(b.mainLine) + '/' + normLine(b.subLine));
+                    const cmp = la.localeCompare(lb);
+                    return asc * (cmp || byName);
+                }
+
+                if (key === 'score') {
+                    const cmp = (a.score - b.score);
+                    return asc * (cmp || byName);
+                }
+
+                if (key === 'wl') {
+                    const wa = +a.wins || 0, wb = +b.wins || 0;
+                    const la = +a.losses || 0, lb = +b.losses || 0;
+                    const cmp = (wa - wb) || (lb - la); // 승 많을수록↑, 승 같으면 패 적을수록↑
+                    return asc * (cmp || byName);
+                }
+
+                if (key === 'wr') {
+                    const ra = winRate(a), rb = winRate(b);
+                    const cmp = (ra - rb);
+                    return asc * (cmp || byName);
+                }
+
+                if (key === 'games') {
+                    const ga = +a.games || 0, gb = +b.games || 0;
+                    const cmp = (ga - gb);
+                    return asc * (cmp || byName);
+                }
+
+                return byName;
+            });
+
+            return sorted;
+        }
+
+        // ===== XLSX 내보내기 (ExcelJS) - 현재 정렬 상태 유지 + 스타일 =====
+        async function exportRosterXLSX({ onlySelected = false } = {}) {
+            if (typeof ExcelJS === 'undefined') {
+                alert('ExcelJS 로더를 찾을 수 없습니다. 스크립트 태그를 확인하세요.');
+                return;
+            }
+
+            let list = getSortedRosterForExport(); // 현재 정렬 상태 그대로 사용
+
+            if (onlySelected) {
+                const ids = new Set(getSelectedIds());
+                list = list.filter(p => ids.has(p.id));
+            }
+
+            // 워크북/시트 생성
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('멤버목록', {
+                properties: { defaultRowHeight: 18 }
+            });
+
+            // 컬럼 정의 (이름 / 점수 / 판수 / 승 / 패 / 승률% / 주라인 / 부라인)
+            ws.columns = [
+                { header: '이름', key: 'name', width: 18 },
+                { header: '점수', key: 'score', width: 10 },
+                { header: '판수', key: 'games', width: 8 },
+                { header: '승', key: 'wins', width: 8 },
+                { header: '패', key: 'losses', width: 8 },
+                { header: '승률(%)', key: 'wr', width: 10 },
+                { header: '주라인', key: 'main', width: 10 },
+                { header: '부라인', key: 'sub', width: 10 },
+            ];
+
+            // 데이터 행 추가
+            list.forEach(p => {
+                ws.addRow({
+                    name: p.name,
+                    score: p.score,
+                    games: p.games || 0,
+                    wins: p.wins || 0,
+                    losses: p.losses || 0,
+                    wr: winRate(p),
+                    main: normLine(p.mainLine),
+                    sub: normLine(p.subLine),
+                });
+            });
+
+            // 헤더 스타일 (다크 톤 + 볼드 + 가운데 정렬)
+            const headerRow = ws.getRow(1);
+            headerRow.eachCell((cell) => {
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FF20304A' } // #20304a
+                };
+                cell.font = { bold: true, color: { argb: 'FFE6EEF8' } }; // #e6eef8
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                cell.border = {
+                    bottom: { style: 'thin', color: { argb: 'FF1C2B45' } }
+                };
+            });
+
+            // 보기 옵션: 헤더 고정
+            ws.views = [{ state: 'frozen', ySplit: 1 }];
+
+            // 본문 스타일: 이름(A), 주라인(G), 부라인(H) 가운데 정렬
+            // 숫자 컬럼은 오른쪽 정렬
+            for (let r = 2; r <= ws.rowCount; r++) {
+                const row = ws.getRow(r);
+
+                // 가운데: A(1), G(7), H(8)
+                [1, 7, 8].forEach(c => {
+                    row.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' };
+                });
+
+                // 오른쪽: 점수(B2), 판수(C3), 승(D4), 패(E5), 승률(F6)
+                [2, 3, 4, 5, 6].forEach(c => {
+                    row.getCell(c).alignment = { vertical: 'middle', horizontal: 'right' };
+                });
+            }
+
+            // 파일명: member_YYMMDD_HHMM.xlsx
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = pad(now.getMonth() + 1);
+            const dd = pad(now.getDate());
+            const HH = pad(now.getHours());
+            const MM = pad(now.getMinutes());
+            const filename = `member_${yy}${mm}${dd}_${HH}${MM}.xlsx`;
+
+            // 저장
+            const buf = await wb.xlsx.writeBuffer();
+            const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+
+        // 버튼 클릭 → 선택된 인원만 내보낼지 확인
+        document.getElementById('btnExportXLSX').addEventListener('click', () => {
+            const ids = getSelectedIds();
+            if (ids.length > 0) {
+                const onlySelected = confirm('선택된 인원만 내보낼까요?\n(확인: 선택만, 취소: 전체)');
+                exportRosterXLSX({ onlySelected });
+            } else {
+                exportRosterXLSX({ onlySelected: false });
+            }
+        });
+
+
         window.addEventListener('dragover', e => e.preventDefault());
         window.addEventListener('drop', e => {
             // managePanel 외부에 드롭하면 네비게이션 방지
@@ -1288,22 +1679,29 @@
             const files = e.dataTransfer?.files;
             if (!files || !files.length) return;
             const f = files[0];
+            const name = (f.name || '').toLowerCase();
 
-            // txt/json만 받기 (원하면 제거 가능)
-            if (!/(\.txt|\.json)$/i.test(f.name)) {
-                alert('txt 또는 json 파일만 지원합니다.');
+            if (name.endsWith('.xlsx')) {
+                const reader = new FileReader();
+                reader.onload = () => loadFromXLSX(reader.result);
+                reader.readAsArrayBuffer(f);
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = () => loadFromText(String(reader.result || ''));
-            reader.readAsText(f, 'utf-8');
-        });
+            if (name.endsWith('.txt') || name.endsWith('.json')) {
+                const reader = new FileReader();
+                reader.onload = () => loadFromText(String(reader.result || ''));
+                reader.readAsText(f, 'utf-8');
+                return;
+            }
 
+            alert('지원하지 않는 형식입니다. .txt, .json 또는 .xlsx 파일을 사용하세요.');
+        });
         function loadFromText(text) {
             try {
                 let data;
                 const trimmed = String(text || '').trim();
+
                 if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
                     data = JSON.parse(trimmed);
                 } else {
@@ -1313,32 +1711,74 @@
                         const a = line.split(',').map(s => s.trim());
                         if (!a[0]) return null;
                         return {
-                            name: a[0], score: +a[1] || 0,
-                            games: a[2] ? Math.max(0, Math.floor(+a[2] || 0)) : 0,
-                            wins: a[3] ? Math.max(0, Math.floor(+a[3] || 0)) : 0,
-                            losses: a[4] ? Math.max(0, Math.floor(+a[4] || 0)) : 0,
-                            mainLine: normLine(a[5] || 'A'),
-                            subLine: normLine(a[6] || 'A')
+                            name: a[0],
+                            score: +a[1] || 0,
+                            games: a[2] ? Math.floor(+a[2] || 0) : 0,
+                            wins: a[3] ? Math.floor(+a[3] || 0) : 0,
+                            losses: a[4] ? Math.floor(+a[4] || 0) : 0,
+                            mainLine: a[5],
+                            subLine: a[6]
                         };
                     }).filter(Boolean);
                 }
                 if (!Array.isArray(data)) data = [data];
-                roster = data.map(it => ({
-                    id: uid(),
-                    name: String(it.name || '').slice(0, 16),
-                    score: +it.score || 0,
-                    games: Math.max(0, Math.floor(+it.games || 0)),
-                    wins: Math.max(0, Math.floor(+it.wins || 0)),
-                    losses: Math.max(0, Math.floor(+it.losses || 0)),
-                    mainLine: normLine(it.mainLine),
-                    subLine: normLine(it.subLine)
-                })).filter(x => x.name);
 
+                // 검증 + 보정
+                const imported = [];
+                const errs = [];
+
+                data.forEach((it, i) => {
+                    const rowNo = i + 1; // 텍스트는 대략 행 번호만
+                    let name = String(it.name || '').slice(0, 16);
+                    if (!name) return; // 빈 이름은 스킵
+                    if (/^[=+\-@]/.test(name)) name = "'" + name;
+
+                    const score = Number(it.score) || 0; // 점수는 음수 허용 요청 없음
+                    const games = Math.floor(Number(it.games) || 0);
+                    const wins = Math.floor(Number(it.wins) || 0);
+                    const losses = Math.floor(Number(it.losses) || 0);
+
+                    if (games < 0 || wins < 0 || losses < 0) {
+                        errs.push(`행 ${rowNo}: 음수 값(games/wins/losses)`);
+                    }
+
+                    const toLetter = (v) => String(v || 'A').trim().toUpperCase().slice(0, 1);
+                    const mainLine = normLine(toLetter(it.mainLine || 'A')); // 허용 외 → A
+                    const subLine = normLine(toLetter(it.subLine || 'A'));
+
+                    imported.push({
+                        id: uid(),
+                        name,
+                        score,
+                        games,
+                        wins,
+                        losses,
+                        mainLine,
+                        subLine
+                    });
+                });
+
+                if (errs.length) {
+                    const preview = errs.slice(0, 5).join('\n');
+                    alert(`텍스트/JSON 불러오기 실패: 음수 값이 감지되었습니다.\n${preview}${errs.length > 5 ? `\n...외 ${errs.length - 5}건` : ''}`);
+                    return;
+                }
+
+                if (!imported.length) {
+                    alert('유효한 데이터 행을 찾지 못했습니다.');
+                    return;
+                }
+
+                const prevCount = roster.length; // ★ 기존 인원 수 저장
+
+                roster = imported;
                 const valid = new Set(roster.map(p => p.id));
                 currentTeams.team1 = currentTeams.team1.filter(id => valid.has(id));
                 currentTeams.team2 = currentTeams.team2.filter(id => valid.has(id));
 
                 saveLocal(); renderRoster(); renderTeams();
+
+                alert(`${imported.length}명의 데이터를 불러와 인원 목록을 교체했습니다.`);
             } catch (e) {
                 console.error(e);
                 alert('불러오기 실패: 파일 형식을 확인하세요.');
@@ -1346,12 +1786,141 @@
         }
 
 
+        function loadFromXLSX(arrayBuffer) {
+            try {
+                const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+                const first = wb.SheetNames && wb.SheetNames[0];
+                if (!first) { alert('시트를 찾을 수 없습니다.'); return; }
+                const ws = wb.Sheets[first];
+
+                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
+                if (!rows.length) { alert('빈 시트입니다.'); return; }
+
+                const header = rows[0].map(x => String(x || '').trim());
+                const dataRows = rows.slice(1);
+
+                const norm = s => String(s || '')
+                    .replace(/\s+/g, '')
+                    .replace(/[^가-힣a-zA-Z0-9]/g, '')
+                    .toLowerCase();
+
+                const headerIdx = {};
+                header.forEach((h, i) => { headerIdx[norm(h)] = i; });
+
+                const pick = (...alts) => {
+                    for (const a of alts) {
+                        const i = headerIdx[norm(a)];
+                        if (i !== undefined) return i;
+                    }
+                    return null;
+                };
+
+                const idxName = pick('이름', 'name');
+                const idxScore = pick('점수', 'score');
+                const idxGames = pick('판수', 'games');
+                const idxWins = pick('승', 'wins');
+                const idxLosses = pick('패', 'losses');
+                const idxMain = pick('주라인', '주 라인', 'mainline');
+                const idxSub = pick('부라인', '부 라인', 'subline');
+
+                if (idxName === null) {
+                    alert('엑셀에 "이름" 열이 필요합니다. (내보낸 형식을 사용해주세요)');
+                    return;
+                }
+
+                const get = (row, i, d = '') =>
+                    (i === null || row[i] === undefined || row[i] === null) ? d : String(row[i]).trim();
+
+                const toInt = (v, def = 0) => {
+                    const n = Number(String(v).trim());
+                    return Number.isFinite(n) ? Math.floor(n) : def;
+                };
+
+                const toLetter = (v) => String(v || 'A').trim().toUpperCase().slice(0, 1);
+
+                const imported = [];
+                const errs = [];
+
+                dataRows.forEach((r, idx) => {
+                    const rowNo = idx + 2; // 헤더 다음줄이 2행
+                    let name = get(r, idxName, '');
+                    if (!name) return; // 빈 이름은 스킵
+
+                    // 이름 최대 16자 + 수식 주입 방지
+                    name = name.slice(0, 16);
+                    if (/^[=+\-@]/.test(name)) name = "'" + name;
+
+                    const score = Number(get(r, idxScore, 0)) || 0; // 점수는 음수 허용 요청 없음
+                    const games = toInt(get(r, idxGames, 0), 0);
+                    const wins = toInt(get(r, idxWins, 0), 0);
+                    const losses = toInt(get(r, idxLosses, 0), 0);
+
+                    if (games < 0 || wins < 0 || losses < 0) {
+                        errs.push(`행 ${rowNo}: 음수 값(games/wins/losses)`);
+                    }
+
+                    const mainLine = normLine(toLetter(get(r, idxMain, 'A'))); // 허용 외 → A
+                    const subLine = normLine(toLetter(get(r, idxSub, 'A'))); // 허용 외 → A
+
+                    imported.push({
+                        id: uid(),
+                        name,
+                        score,
+                        games,
+                        wins,
+                        losses,
+                        mainLine,
+                        subLine
+                    });
+                });
+
+                if (errs.length) {
+                    const preview = errs.slice(0, 5).join('\n');
+                    alert(`엑셀 불러오기 실패: 음수 값이 감지되었습니다.\n${preview}${errs.length > 5 ? `\n...외 ${errs.length - 5}건` : ''}`);
+                    return;
+                }
+
+                if (!imported.length) {
+                    alert('유효한 데이터 행을 찾지 못했습니다.');
+                    return;
+                }
+
+                roster = imported;
+                const valid = new Set(roster.map(p => p.id));
+                currentTeams.team1 = currentTeams.team1.filter(id => valid.has(id));
+                currentTeams.team2 = currentTeams.team2.filter(id => valid.has(id));
+                saveLocal(); renderRoster(); renderTeams();
+
+                alert(`${imported.length}명의 데이터를 XLSX에서 불러와 인원 목록을 교체했습니다.`);
+            } catch (e) {
+                console.error(e);
+                alert('XLSX 불러오기 중 오류가 발생했습니다.');
+            }
+        }
+
+
+
+
         document.getElementById('btnLoad').addEventListener('click', () => {
             const f = fileInput.files?.[0];
             if (!f) { alert('불러올 파일을 선택하세요.'); fileInput.click(); return; }
-            const reader = new FileReader();
-            reader.onload = () => loadFromText(String(reader.result || ''));
-            reader.readAsText(f, 'utf-8');
+
+            const name = f.name.toLowerCase();
+
+            // 확장자 분기
+            if (name.endsWith('.xlsx')) {
+                // XLSX는 이진이므로 ArrayBuffer로 읽기
+                const reader = new FileReader();
+                reader.onload = () => loadFromXLSX(reader.result);
+                reader.readAsArrayBuffer(f);
+            } else if (name.endsWith('.txt') || name.endsWith('.json')) {
+                // 텍스트 계열은 문자열로 읽기
+                const reader = new FileReader();
+                reader.onload = () => loadFromText(String(reader.result || ''));
+                reader.readAsText(f, 'utf-8');
+            } else {
+                alert('지원하지 않는 형식입니다. .txt, .json 또는 .xlsx 파일을 사용하세요.');
+            }
         });
 
         // 팀 만들기/리메이크/정렬
@@ -1374,21 +1943,38 @@
                 pick = buildBalancedTeams(players, mode);
                 mmrToleranceInput.value = bakT; mixStrengthSel.value = bakS;
             }
-            currentTeams = pick; renderTeams(); lastTeams = JSON.parse(JSON.stringify(currentTeams));
+            currentTeams = pick;
+            renderTeams();
+            renderRoster();
+            lastTeams = JSON.parse(JSON.stringify(currentTeams));
         });
 
         document.getElementById('btnRemakeTeams').addEventListener('click', () => {
             const all = [...currentTeams.team1, ...currentTeams.team2];
-            if (all.length < 2 || all.length % 2 !== 0) { alert('먼저 짝수 인원으로 팀을 만들어주세요. (현재 ' + all.length + '명)'); return; }
+            if (all.length < 2 || all.length % 2 !== 0) {
+                alert('먼저 짝수 인원으로 팀을 만들어주세요. (현재 ' + all.length + '명)');
+                return;
+            }
             const players = all.map(id => roster.find(p => p.id === id)).filter(Boolean);
-            if (players.length !== all.length) { alert('일부 멤버가 목록에서 사라졌습니다. 다시 선택해서 팀을 만들어주세요.'); return; }
+            if (players.length !== all.length) {
+                alert('일부 멤버가 목록에서 사라졌습니다. 다시 선택해서 팀을 만들어주세요.');
+                return;
+            }
+
+            roster.forEach(p => p.lastDelta = 0);
+
             currentTeams = buildBalancedTeams(players, (balanceModeSel && balanceModeSel.value) || 'prefer_line');
-            renderTeams(); lastTeams = JSON.parse(JSON.stringify(currentTeams));
+            renderTeams();
+            renderRoster();
+            lastTeams = JSON.parse(JSON.stringify(currentTeams));
         });
 
         teamSortSel.addEventListener('change', renderTeams);
 
         document.getElementById('btnClearTeams').addEventListener('click', () => {
+
+            roster.forEach(p => p.lastDelta = 0);
+
             currentTeams = { team1: [], team2: [] };
             lastTeams = { team1: [], team2: [] };
             renderTeams();
@@ -1413,6 +1999,7 @@
             currentTeams.team1 = currentTeams.team1.filter(id => !ids.has(id));
             currentTeams.team2 = currentTeams.team2.filter(id => !ids.has(id));
             renderTeams();
+            renderRoster();
         });
 
         // 승패 반영
@@ -1428,6 +2015,12 @@
         function applyResult(winTeam) {
             const ids1 = new Set(currentTeams.team1), ids2 = new Set(currentTeams.team2);
             if (ids1.size === 0 || ids2.size === 0 || ids1.size !== ids2.size) { alert('먼저 짝수 인원으로 팀을 만들어주세요.'); return; }
+
+            roster.forEach(p => p.lastDelta = 0);
+
+            const targetBox = (winTeam === 1) ? team1Box : team2Box;
+            launchConfetti(targetBox, { duration: 1800, count: 180 });
+
             const team1 = roster.filter(p => ids1.has(p.id)), team2 = roster.filter(p => ids2.has(p.id));
             const mode = (scoringModeSel && scoringModeSel.value) || 'fixed';
 
@@ -1437,22 +2030,39 @@
                 const K = Math.round(Number(eloKInput && eloKInput.value ? eloKInput.value : 32)) || 32;
                 const S1 = (winTeam === 1 ? 1 : 0), S2 = (winTeam === 2 ? 1 : 0);
                 const d1 = K * (S1 - E1), d2 = K * (S2 - E2);
+
                 team1.forEach(p => {
-                    const mult = isPlacement(p.games) ? 2 : 1; p.score = Math.round(clamp(p.score + d1 * mult, -9999, 9999));
-                    p.games = (p.games || 0) + 1; if (winTeam === 1) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
+                    const mult = isPlacement(p.games) ? 2 : 1;
+                    const change = Math.round(d1 * mult);
+                    p.lastDelta = change;
+                    p.score = Math.round(clamp(p.score + change, -9999, 9999));
+                    p.games = (p.games || 0) + 1;
+                    if (winTeam === 1) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
                 });
+
                 team2.forEach(p => {
-                    const mult = isPlacement(p.games) ? 2 : 1; p.score = Math.round(clamp(p.score + d2 * mult, -9999, 9999));
-                    p.games = (p.games || 0) + 1; if (winTeam === 2) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
+                    const mult = isPlacement(p.games) ? 2 : 1;
+                    const change = Math.round(d2 * mult);
+                    p.lastDelta = change;
+                    p.score = Math.round(clamp(p.score + change, -9999, 9999));
+                    p.games = (p.games || 0) + 1;
+                    if (winTeam === 2) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
                 });
             } else {
                 const delta = Math.round(Number(winBonusInput && winBonusInput.value ? winBonusInput.value : 10)) || 10;
                 roster.forEach(p => {
-                    const in1 = ids1.has(p.id), in2 = ids2.has(p.id); if (!in1 && !in2) return;
+                    const in1 = ids1.has(p.id), in2 = ids2.has(p.id);
+                    if (!in1 && !in2) return;
+
                     const mult = isPlacement(p.games) ? 2 : 1;
-                    if (in1) p.score += (winTeam === 1 ? delta * mult : -delta * mult);
-                    if (in2) p.score += (winTeam === 2 ? delta * mult : -delta * mult);
-                    p.score = Math.round(clamp(p.score, -9999, 9999)); p.games = (p.games || 0) + 1;
+                    let change = 0;
+                    if (in1) change = (winTeam === 1 ? delta * mult : -delta * mult);
+                    if (in2) change = (winTeam === 2 ? delta * mult : -delta * mult);
+
+                    p.lastDelta = change; // ★ 기록
+                    p.score = Math.round(clamp(p.score + change, -9999, 9999));
+                    p.games = (p.games || 0) + 1;
+
                     if (in1) { if (winTeam === 1) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1; }
                     if (in2) { if (winTeam === 2) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1; }
                 });
@@ -1462,19 +2072,52 @@
 
         /* ============ 환경설정 ============ */
         function initPrefs() {
-            try { const v = localStorage.getItem(WIN_BONUS_KEY); if (v) winBonusInput.value = String(Math.round(+v || 10)); } catch { }
-            if (winBonusInput) winBonusInput.addEventListener('change', () => { const v = Math.round(+winBonusInput.value || 10); winBonusInput.value = String(v); try { localStorage.setItem(WIN_BONUS_KEY, String(v)); } catch { } });
             try {
-                const m = localStorage.getItem(MODE_KEY); if (m && scoringModeSel) scoringModeSel.value = m;
-                const k = localStorage.getItem(ELO_K_KEY); if (k && eloKInput) eloKInput.value = String(Math.round(+k || 32));
-            } catch { } toggleScoringControls();
+                const v = localStorage.getItem(WIN_BONUS_KEY);
+                if (v) winBonusInput.value = String(Math.round(+v || 10));
+            } catch { }
+            if (winBonusInput) winBonusInput.addEventListener('change', () => {
+                const v = Math.round(+winBonusInput.value || 10);
+                winBonusInput.value = String(v);
+                try { localStorage.setItem(WIN_BONUS_KEY, String(v)); } catch { }
+            });
+
+            // 점수 방식
+            try {
+                const m = localStorage.getItem(MODE_KEY);
+                if (m && scoringModeSel) scoringModeSel.value = m;
+                const k = localStorage.getItem(ELO_K_KEY);
+                if (k && eloKInput) eloKInput.value = String(Math.round(+k || 32));
+            } catch { }
+            toggleScoringControls();
             if (scoringModeSel) scoringModeSel.addEventListener('change', () => {
                 try { localStorage.setItem(MODE_KEY, scoringModeSel.value); } catch { }
                 toggleScoringControls();
             });
-            if (eloKInput) eloKInput.addEventListener('change', () => { const v = Math.round(+eloKInput.value || 32); eloKInput.value = String(v); try { localStorage.setItem(ELO_K_KEY, String(v)); } catch { } });
-        }
+            if (eloKInput) eloKInput.addEventListener('change', () => {
+                const v = Math.round(+eloKInput.value || 32);
+                eloKInput.value = String(v);
+                try { localStorage.setItem(ELO_K_KEY, String(v)); } catch { }
+            });
 
+            // ★ 팀 섞기 기준
+            try {
+                const bm = localStorage.getItem(BALANCE_MODE_KEY);
+                if (bm && balanceModeSel) balanceModeSel.value = bm;
+            } catch { }
+            if (balanceModeSel) balanceModeSel.addEventListener('change', () => {
+                try { localStorage.setItem(BALANCE_MODE_KEY, balanceModeSel.value); } catch { }
+            });
+
+            // ★ 균형 허용치
+            try {
+                const mt = localStorage.getItem(MMR_TOLERANCE_KEY);
+                if (mt && mmrToleranceInput) mmrToleranceInput.value = mt;
+            } catch { }
+            if (mmrToleranceInput) mmrToleranceInput.addEventListener('change', () => {
+                try { localStorage.setItem(MMR_TOLERANCE_KEY, mmrToleranceInput.value); } catch { }
+            });
+        }
         function buildTeamsText() {
             // id → 이름 매핑
             const nameById = new Map(roster.map(p => [p.id, p.name]));
@@ -1531,6 +2174,147 @@
                 renderRoster(); // 목록 갱신 + 헤더 화살표 갱신
             });
         });
+
+        // ====== 축하 폭죽 ======
+        function launchConfetti(targetEl, opts = {}) {
+            const duration = opts.duration ?? 1600; // ms
+            const count = opts.count ?? 150;
+
+            const BOUNCE = 0.45;        // 바닥/벽 반발계수 (0~1)
+            const EDGE_FRICTION = 0.98; // 벽에 닿을 때 살짝 감속
+            const GROUND_FRICTION = 0.90; // 바닥에서 미끄러질 때 감속
+
+            // 캔버스 생성 및 타깃 위에 올리기
+            const rect = targetEl.getBoundingClientRect();
+            const canvas = document.createElement('canvas');
+            canvas.style.position = 'absolute';
+            canvas.style.left = '0';
+            canvas.style.top = '0';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.pointerEvents = 'none';
+            targetEl.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+
+            function resize() {
+                // 타깃 사이즈 기준으로 캔버스 픽셀 크기 설정
+                const w = targetEl.clientWidth || rect.width;
+                const h = targetEl.clientHeight || rect.height;
+                canvas.width = Math.max(1, Math.floor(w * dpr));
+                canvas.height = Math.max(1, Math.floor(h * dpr));
+            }
+            resize();
+
+            // 중심에서 살짝 위쪽에서 터지면 보기 좋음
+            const originX = canvas.width * 0.5;
+            const originY = canvas.height * 0.35;
+
+            // 확~ 퍼지게 하는 튜닝값
+            const POWER = 1.6;         // 초기속도 배율
+            const BASE_SPEED = 4;      // 기본 속도
+            const SPEED_VAR = 4;       // 속도 가변폭
+            const GRAVITY_MIN = 0.08;  // 중력 범위(낮출수록 더 오래/멀리)
+            const GRAVITY_VAR = 0.08;
+            const AIR_DRAG = 0.97;    // 공기저항(1에 가까우면 오래감)
+
+            // 파티클 생성(360도 확산)
+            const particles = Array.from({ length: count }, () => {
+                const theta = Math.random() * Math.PI * 2; // 0~360도
+                const speed = (BASE_SPEED + Math.random() * SPEED_VAR) * POWER * dpr;
+                return {
+                    x: originX,
+                    y: originY,
+                    vx: Math.cos(theta) * speed,
+                    vy: Math.sin(theta) * speed,
+                    g: (GRAVITY_MIN + Math.random() * GRAVITY_VAR) * dpr,
+                    w: (4 + Math.random() * 6) * dpr,
+                    h: (6 + Math.random() * 10) * dpr,
+                    rot: Math.random() * Math.PI,
+                    vr: (Math.random() - 0.5) * 0.3,
+                    color: ['#22c55e', '#4da3ff', '#f59e0b', '#ef4444', '#a78bfa', '#34d399'][(Math.random() * 6) | 0],
+                    alpha: 1
+                };
+            });
+
+            const start = performance.now();
+
+            function step(t) {
+                const elapsed = t - start;
+                const progress = Math.min(1, elapsed / duration);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (const p of particles) {
+                    // 이동 + 감속 + 중력
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vx *= AIR_DRAG;
+                    p.vy = p.vy * AIR_DRAG + p.g;
+                    p.rot += p.vr;
+
+                    // === 경계 충돌: 좌/우 벽 ===
+                    if (p.x < 0) {
+                        p.x = 0;
+                        p.vx = -p.vx * BOUNCE;
+                        p.vy *= EDGE_FRICTION;
+                        p.vr *= EDGE_FRICTION;
+                    } else if (p.x > canvas.width) {
+                        p.x = canvas.width;
+                        p.vx = -p.vx * BOUNCE;
+                        p.vy *= EDGE_FRICTION;
+                        p.vr *= EDGE_FRICTION;
+                    }
+
+                    // === 경계 충돌: 천장 ===
+                    if (p.y < 0) {
+                        p.y = 0;
+                        p.vy = -p.vy * BOUNCE;
+                        p.vx *= EDGE_FRICTION;
+                        p.vr *= EDGE_FRICTION;
+                    }
+
+                    // === 경계 충돌: 바닥(중력 방향) ===
+                    if (p.y > canvas.height) {
+                        p.y = canvas.height;
+                        // 아래로 내려오던 속도를 위로 튕기게
+                        p.vy = -Math.abs(p.vy) * BOUNCE;
+
+                        // 바닥에서 미끄러지며 감속
+                        p.vx *= GROUND_FRICTION;
+                        p.vr *= GROUND_FRICTION;
+
+                        // 아주 느려지면 멈춘 느낌 주기
+                        if (Math.abs(p.vy) < 0.25 * dpr) p.vy = 0;
+                        if (Math.abs(p.vx) < 0.15 * dpr) p.vx = 0;
+                    }
+
+                    // 점점 사라지기
+                    p.alpha = 1 - progress;
+
+                    // 그리기
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                }
+
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    // 마무리
+                    targetEl.removeChild(canvas);
+                }
+            }
+
+            requestAnimationFrame(step);
+        }
+
 
 
         // ===== 초기화 =====

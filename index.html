@@ -450,6 +450,18 @@
             box-shadow: 0 0 0 3px rgba(77, 163, 255, .12) inset;
             background-image: linear-gradient(180deg, rgba(77, 163, 255, .06), transparent);
         }
+
+        .rhead thead th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .sort-ind {
+            font-weight: 800;
+            margin-left: 4px;
+            opacity: .9;
+        }
     </style>
 </head>
 
@@ -561,13 +573,6 @@
                         </label>
                         <button class="btn" id="btnAdd">인원추가</button>
 
-                        <label class="muted" style="margin-left:auto">
-                            <select id="rosterSort">
-                                <option value="name" selected>이름 ▲</option>
-                                <option value="wr">승률 ▼</option>
-                                <option value="score">점수 ▼</option>
-                            </select>
-                        </label>
                     </div>
 
                     <!-- ▼ 이름 검색 바 추가 -->
@@ -593,12 +598,13 @@
                             <thead>
                                 <tr>
                                     <th><input type="checkbox" id="checkAll"></th>
-                                    <th>이름</th>
-                                    <th>라인<br><span class="muted" style="font-weight:400;">주/부</span></th>
-                                    <th>점수</th>
-                                    <th>판수</th>
-                                    <th>승/패</th>
-                                    <th>승률</th>
+                                    <th class="sortable" data-sort="name">이름 <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="line">라인<br><span class="muted"
+                                            style="font-weight:400;">주/부</span> <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="score">점수 <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="games">판수 <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="wl">승/패 <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="wr">승률 <span class="sort-ind"></span></th>
                                 </tr>
                             </thead>
                         </table>
@@ -733,7 +739,6 @@
         const lineSecondaryInput = document.getElementById('lineSecondaryInput');
         const balanceModeSel = document.getElementById('balanceMode');
         const teamSortSel = document.getElementById('teamSort');
-        const rosterSortSel = document.getElementById('rosterSort');
         const mmrToleranceInput = document.getElementById('mmrTolerance');
         const mixStrengthSel = document.getElementById('mixStrength');
         const rosterSearchInput = document.getElementById('rosterSearch');
@@ -743,6 +748,9 @@
         const eloKWrap = document.getElementById('eloKWrap');
         const winBonusWrap = document.getElementById('winBonusWrap');
         const managePanel = document.getElementById('managePanel');
+
+        let rosterSortKey = 'name';   // name | line | score | wl | wr
+        let rosterSortAsc = true;     // true: 오름차순, false: 내림차순
 
         let rosterSearchTerm = '';
 
@@ -933,15 +941,64 @@
             return best;
         }
 
+        function updateRosterHeaderIndicators() {
+            const ths = document.querySelectorAll('.rhead thead th.sortable');
+            ths.forEach(th => {
+                const key = th.getAttribute('data-sort');
+                const ind = th.querySelector('.sort-ind');
+                if (!ind) return;
+                if (key === rosterSortKey) {
+                    ind.textContent = rosterSortAsc ? '▲' : '▼';
+                    ind.style.opacity = '1';
+                } else {
+                    ind.textContent = '';
+                    ind.style.opacity = '.5';
+                }
+            });
+        }
+
         /* ============ 렌더: 로스터/팀 ============ */
         function renderRoster() {
-            const key = (rosterSortSel && rosterSortSel.value) || 'name';
+            const key = rosterSortKey;
+            const asc = rosterSortAsc ? 1 : -1;
             const term = rosterSearchTerm.trim().toLowerCase();
+
             const sorted = roster.slice().sort((a, b) => {
-                if (key === 'name') return a.name.localeCompare(b.name, 'ko');
-                if (key === 'wr') return (winRate(b) - winRate(a)) || a.name.localeCompare(b.name, 'ko');
-                if (key === 'score') return (b.score - a.score) || a.name.localeCompare(b.name, 'ko');
-                return 0;
+                const byName = a.name.localeCompare(b.name, 'ko');
+                if (key === 'name') return asc * byName;
+
+                if (key === 'line') {
+                    const la = (normLine(a.mainLine) + '/' + normLine(a.subLine));
+                    const lb = (normLine(b.mainLine) + '/' + normLine(b.subLine));
+                    const cmp = la.localeCompare(lb);
+                    return asc * (cmp || byName);
+                }
+
+                if (key === 'score') {
+                    const cmp = (a.score - b.score);
+                    return asc * (cmp || byName);
+                }
+
+                if (key === 'wl') {
+                    const wa = +a.wins || 0, wb = +b.wins || 0;
+                    const la = +a.losses || 0, lb = +b.losses || 0;
+                    const cmp = (wa - wb) || (lb - la); // 승 많을수록↑, 승 같으면 패 적을수록↑
+                    return asc * (cmp || byName);
+                }
+
+                if (key === 'wr') {
+                    const ra = winRate(a), rb = winRate(b);
+                    const cmp = (ra - rb);
+                    return asc * (cmp || byName);
+                }
+
+                if (key === 'games') {
+                    const ga = +a.games || 0, gb = +b.games || 0;
+                    const cmp = (ga - gb);
+                    return asc * (cmp || byName);
+                }
+
+                return byName;
             });
             const list = term ? sorted.filter(p => p.name.toLowerCase().includes(term)) : sorted;
 
@@ -973,6 +1030,7 @@
             });
             if (checkAll) checkAll.checked = false;
             updateSelectedUI();
+            updateRosterHeaderIndicators();
         }
 
 
@@ -1329,7 +1387,6 @@
         });
 
         teamSortSel.addEventListener('change', renderTeams);
-        rosterSortSel.addEventListener('change', renderRoster);
 
         document.getElementById('btnClearTeams').addEventListener('click', () => {
             currentTeams = { team1: [], team2: [] };
@@ -1460,12 +1517,29 @@
             });
         }
 
+        // 헤더 클릭으로 정렬 토글
+        document.querySelectorAll('.rhead thead th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.getAttribute('data-sort');
+                if (!key) return;
+                if (rosterSortKey === key) {
+                    rosterSortAsc = !rosterSortAsc;      // 같은 키면 방향 토글
+                } else {
+                    rosterSortKey = key;                 // 다른 키면 키 변경 + 기본 오름차순
+                    rosterSortAsc = true;
+                }
+                renderRoster(); // 목록 갱신 + 헤더 화살표 갱신
+            });
+        });
+
+
         // ===== 초기화 =====
         loadLocal(); initPrefs();
         roster = roster.map(p => ({ ...p, mainLine: normLine(p.mainLine || 'A'), subLine: normLine(p.subLine || 'A') }));
         saveLocal();
         renderRoster(); renderTeams();
         toggleScoringControls();
+
     </script>
 </body>
 

@@ -424,6 +424,24 @@
             padding: 0 2px;
             border-radius: 3px;
         }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 18px;
+            padding-top: 10px;
+            border-top: 1px solid #1c2b45;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .footer-note a {
+            color: #9db7d9;
+            text-decoration: none;
+        }
+
+        .footer-note a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -495,22 +513,10 @@
                         </div>
                     </div>
 
-                    <div class="muted">배치: 각 플레이어의 <b>현재 판수가 ≤ 10</b>이면 점수 변화가 <b>2배</b>로 적용됩니다.</div>
-                    <div class="muted">고정감산을 선택할 경우 승리 보상만큼의 점수가 가산/감산 됩니다.</div>
-                    <div class="muted">멤버를 인원관리에 드래그 드롭하여 제외할 수 있습니다.</div>
-                    <div class="muted">
-                        티어 예시 (400점 단위):<br>
-                        Iron: 0–399<br>
-                        Bronze: 400–799<br>
-                        Silver: 800–1199<br>
-                        Gold: 1200–1599<br>
-                        Platinum: 1600–1999<br>
-                        Emerald: 2000–2399<br>
-                        Diamond: 2400–2799<br>
-                        Master: 2800–3199<br>
-                        Grandmaster: 3200–3599<br>
-                        Challenger: 3600+
-                    </div>
+                    <div class="muted" style="padding-top:15px;">배치: 각 플레이어의 <b>현재 판수가 ≤ 10</b>이면 점수 변화가 <b>2배</b>로
+                        적용됩니다.</div>
+                    <div class="muted" style="padding-top:15px;">고정감산을 선택할 경우 승리 보상만큼의 점수가 가산/감산 됩니다.</div>
+                    <div class="muted" style="padding-top:15px;">멤버를 인원관리에 드래그 드롭하여 제외할 수 있습니다.</div>
                 </div>
             </div>
 
@@ -614,15 +620,31 @@
                         <input id="fileInput" type="file" accept=".txt,.json" />
                         <button class="btn" id="btnLoad">불러오기</button>
                         <span class="muted">현재 멤버 목록을 저장하여 불러올 수 있습니다.</span>
+                        <div class="muted" style="padding-top:15px;">
+                            티어 예시 (400점 단위):<br>
+                            Iron: 0–399<br>
+                            Bronze: 400–799<br>
+                            Silver: 800–1199<br>
+                            Gold: 1200–1599<br>
+                            Platinum: 1600–1999<br>
+                            Emerald: 2000–2399<br>
+                            Diamond: 2400–2799<br>
+                            Master: 2800–3199<br>
+                            Grandmaster: 3200–3599<br>
+                            Challenger: 3600+
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="footer-note">
+            오류 및 문의사항 : <a href="mailto:dosirak2332@daum.net">dosirak2332@daum.net</a>
         </div>
     </div>
 
     <script>
         /* =========================
-           상태/상수/유틸 (필요한 것만)
+            상태/상수/유틸 (필요한 것만)
         ========================= */
         const STORAGE_KEY = 'team_roster_v1', WIN_BONUS_KEY = 'win_bonus_v1', MODE_KEY = 'scoring_mode_v1', ELO_K_KEY = 'elo_k_v1';
         let roster = [];

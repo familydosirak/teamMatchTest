@@ -517,6 +517,7 @@
                         <label class="muted" id="winBonusWrap">승리 보상 <input id="winBonusInput" type="number"
                                 value="30" /></label>
                         <div style="margin-left:auto;">
+                            <button class="btn ghost" id="btnCopyTeamsText" title="팀 구성 텍스트 복사">팀 구성 복사</button>
                             <button class="btn primary" id="btnRemakeTeams">현재 멤버로 팀 다시 짜기</button>
                             <button class="btn ghost" id="btnClearTeams">팀 비우기</button>
                         </div>
@@ -578,7 +579,7 @@
                     </div>
                     <!-- ▲ 이름 검색 바 -->
 
-                    <div class="rosterTable"  id="managePanel">
+                    <div class="rosterTable" id="managePanel">
                         <table class="rhead" style="padding-left : 10px; padding-right:15px;">
                             <colgroup>
                                 <col style="width:44px" />
@@ -625,7 +626,8 @@
                     </div>
                     <div class="listbar" style="padding-bottom:12px">
                         <button class="btn warn" id="btnDelete">인원 삭제(선택)</button>
-                        <button class="btn" id="btnSave">텍스트로 저장</button> <span class="muted">현재 멤버 목록을 저장하여 불러올 수 있습니다.</span>
+                        <button class="btn" id="btnSave">텍스트로 저장</button> <span class="muted">현재 멤버 목록을 저장하여 불러올 수
+                            있습니다.</span>
                     </div>
                     <div class="listbar" style="padding-bottom:12px">
                         <input id="fileInput" type="file" accept=".txt,.json" />
@@ -1414,6 +1416,48 @@
                 toggleScoringControls();
             });
             if (eloKInput) eloKInput.addEventListener('change', () => { const v = Math.round(+eloKInput.value || 32); eloKInput.value = String(v); try { localStorage.setItem(ELO_K_KEY, String(v)); } catch { } });
+        }
+
+        function buildTeamsText() {
+            // id → 이름 매핑
+            const nameById = new Map(roster.map(p => [p.id, p.name]));
+            const n1 = currentTeams.team1.map(id => nameById.get(id)).filter(Boolean);
+            const n2 = currentTeams.team2.map(id => nameById.get(id)).filter(Boolean);
+
+            const s1 = n1.length ? n1.join(', ') : '(비어있음)';
+            const s2 = n2.length ? n2.join(', ') : '(비어있음)';
+            return `1팀 ${s1}\n2팀 ${s2}`;
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (e) { /* fallback으로 진행 */ }
+
+            // Fallback (구형 브라우저)
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            const ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            return ok;
+        }
+
+        const btnCopy = document.getElementById('btnCopyTeamsText');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', async () => {
+                const text = buildTeamsText();
+                const ok = await copyToClipboard(text);
+                const old = btnCopy.textContent;
+                btnCopy.textContent = ok ? '복사 완료!' : '복사 실패';
+                setTimeout(() => { btnCopy.textContent = old; }, 1200);
+            });
         }
 
         // ===== 초기화 =====

@@ -443,6 +443,13 @@
         .footer-note a:hover {
             text-decoration: underline;
         }
+
+        #managePanel.dragover {
+            outline: 2px dashed var(--acc);
+            outline-offset: -6px;
+            box-shadow: 0 0 0 3px rgba(77, 163, 255, .12) inset;
+            background-image: linear-gradient(180deg, rgba(77, 163, 255, .06), transparent);
+        }
     </style>
 </head>
 
@@ -571,7 +578,7 @@
                     </div>
                     <!-- ▲ 이름 검색 바 -->
 
-                    <div class="rosterTable">
+                    <div class="rosterTable"  id="managePanel">
                         <table class="rhead" style="padding-left : 10px; padding-right:15px;">
                             <colgroup>
                                 <col style="width:44px" />
@@ -618,12 +625,12 @@
                     </div>
                     <div class="listbar" style="padding-bottom:12px">
                         <button class="btn warn" id="btnDelete">인원 삭제(선택)</button>
-                        <button class="btn" id="btnSave">텍스트로 저장</button>
+                        <button class="btn" id="btnSave">텍스트로 저장</button> <span class="muted">현재 멤버 목록을 저장하여 불러올 수 있습니다.</span>
                     </div>
                     <div class="listbar" style="padding-bottom:12px">
                         <input id="fileInput" type="file" accept=".txt,.json" />
                         <button class="btn" id="btnLoad">불러오기</button>
-                        <span class="muted">현재 멤버 목록을 저장하여 불러올 수 있습니다.</span>
+                        <span class="muted">파일을 인원관리 리스트에 드래그하여 불러올 수 있습니다.</span>
                         <div class="muted" style="padding-top:15px;">
                             티어 예시 (400점 단위):<br>
                             Iron: 0–399<br>
@@ -733,6 +740,8 @@
         const selectedNamesEl = document.getElementById('selectedNames');
         const eloKWrap = document.getElementById('eloKWrap');
         const winBonusWrap = document.getElementById('winBonusWrap');
+        const managePanel = document.getElementById('managePanel');
+
         let rosterSearchTerm = '';
 
         const lineOptionsHTML = (sel) => ['T', 'J', 'M', 'B', 'S', 'A'].map(k => `<option value="${k}" ${sel === k ? 'selected' : ''} title="${LINE_TITLE[k]}">${k}</option>`).join('');
@@ -1190,40 +1199,98 @@
             a.click();
             URL.revokeObjectURL(url);
         });
-        
-        document.getElementById('btnLoad').addEventListener('click', () => {
-            const f = fileInput.files?.[0]; if (!f) { alert('불러올 파일을 선택하세요.'); fileInput.click(); return; }
+
+        window.addEventListener('dragover', e => e.preventDefault());
+        window.addEventListener('drop', e => {
+            // managePanel 외부에 드롭하면 네비게이션 방지
+            if (!(e.target && managePanel && managePanel.contains(e.target))) {
+                e.preventDefault();
+            }
+        });
+
+        // 패널 하이라이트 on/off
+        ['dragenter', 'dragover'].forEach(ev => {
+            managePanel.addEventListener(ev, e => {
+                if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+                e.preventDefault(); e.stopPropagation();
+                managePanel.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(ev => {
+            managePanel.addEventListener(ev, e => {
+                e.preventDefault(); e.stopPropagation();
+                managePanel.classList.remove('dragover');
+            });
+        });
+
+        // 실제 드롭 처리
+        managePanel.addEventListener('drop', e => {
+            const files = e.dataTransfer?.files;
+            if (!files || !files.length) return;
+            const f = files[0];
+
+            // txt/json만 받기 (원하면 제거 가능)
+            if (!/(\.txt|\.json)$/i.test(f.name)) {
+                alert('txt 또는 json 파일만 지원합니다.');
+                return;
+            }
+
             const reader = new FileReader();
-            reader.onload = () => {
-                try {
-                    const text = String(reader.result || ''); let data;
-                    if (text.trim().startsWith('[') || text.trim().startsWith('{')) data = JSON.parse(text);
-                    else {
-                        data = text.split(/\r?\n/).map(line => {
-                            if (!line.trim()) return null;
-                            const a = line.split(',').map(s => s.trim());
-                            if (!a[0]) return null;
-                            return {
-                                name: a[0], score: +a[1] || 0,
-                                games: a[2] ? Math.max(0, Math.floor(+a[2] || 0)) : 0,
-                                wins: a[3] ? Math.max(0, Math.floor(+a[3] || 0)) : 0,
-                                losses: a[4] ? Math.max(0, Math.floor(+a[4] || 0)) : 0,
-                                mainLine: normLine(a[5] || 'A'), subLine: normLine(a[6] || 'A')
-                            };
-                        }).filter(Boolean);
-                    }
-                    if (!Array.isArray(data)) data = [data];
-                    roster = data.map(it => ({
-                        id: uid(), name: String(it.name || '').slice(0, 16), score: +it.score || 0,
-                        games: Math.max(0, Math.floor(+it.games || 0)), wins: Math.max(0, Math.floor(+it.wins || 0)),
-                        losses: Math.max(0, Math.floor(+it.losses || 0)), mainLine: normLine(it.mainLine), subLine: normLine(it.subLine)
-                    })).filter(x => x.name);
-                    const valid = new Set(roster.map(p => p.id));
-                    currentTeams.team1 = currentTeams.team1.filter(id => valid.has(id));
-                    currentTeams.team2 = currentTeams.team2.filter(id => valid.has(id));
-                    saveLocal(); renderRoster(); renderTeams();
-                } catch (e) { console.error(e); alert('불러오기 실패: 파일 형식을 확인하세요.'); }
-            };
+            reader.onload = () => loadFromText(String(reader.result || ''));
+            reader.readAsText(f, 'utf-8');
+        });
+
+        function loadFromText(text) {
+            try {
+                let data;
+                const trimmed = String(text || '').trim();
+                if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                    data = JSON.parse(trimmed);
+                } else {
+                    // 텍스트(CSV풍): 이름, 점수, 판수, 승, 패, 주라인, 부라인
+                    data = trimmed.split(/\r?\n/).map(line => {
+                        if (!line.trim()) return null;
+                        const a = line.split(',').map(s => s.trim());
+                        if (!a[0]) return null;
+                        return {
+                            name: a[0], score: +a[1] || 0,
+                            games: a[2] ? Math.max(0, Math.floor(+a[2] || 0)) : 0,
+                            wins: a[3] ? Math.max(0, Math.floor(+a[3] || 0)) : 0,
+                            losses: a[4] ? Math.max(0, Math.floor(+a[4] || 0)) : 0,
+                            mainLine: normLine(a[5] || 'A'),
+                            subLine: normLine(a[6] || 'A')
+                        };
+                    }).filter(Boolean);
+                }
+                if (!Array.isArray(data)) data = [data];
+                roster = data.map(it => ({
+                    id: uid(),
+                    name: String(it.name || '').slice(0, 16),
+                    score: +it.score || 0,
+                    games: Math.max(0, Math.floor(+it.games || 0)),
+                    wins: Math.max(0, Math.floor(+it.wins || 0)),
+                    losses: Math.max(0, Math.floor(+it.losses || 0)),
+                    mainLine: normLine(it.mainLine),
+                    subLine: normLine(it.subLine)
+                })).filter(x => x.name);
+
+                const valid = new Set(roster.map(p => p.id));
+                currentTeams.team1 = currentTeams.team1.filter(id => valid.has(id));
+                currentTeams.team2 = currentTeams.team2.filter(id => valid.has(id));
+
+                saveLocal(); renderRoster(); renderTeams();
+            } catch (e) {
+                console.error(e);
+                alert('불러오기 실패: 파일 형식을 확인하세요.');
+            }
+        }
+
+
+        document.getElementById('btnLoad').addEventListener('click', () => {
+            const f = fileInput.files?.[0];
+            if (!f) { alert('불러올 파일을 선택하세요.'); fileInput.click(); return; }
+            const reader = new FileReader();
+            reader.onload = () => loadFromText(String(reader.result || ''));
             reader.readAsText(f, 'utf-8');
         });
 

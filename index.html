@@ -680,6 +680,7 @@
                             <div class="wins">
                                 <button class="btn success" id="btnWin1" title="1팀 승">1팀 승리</button>
                                 <button class="btn success" id="btnWin2" title="2팀 승">2팀 승리</button>
+                                <button class="btn ghost" id="btnUndo" title="마지막 결과 되돌리기" disabled>되돌리기</button>
                             </div>
                         </div>
 
@@ -866,6 +867,7 @@
         let currentTeams = { team1: [], team2: [] };
         let teamHistory = []; const HISTORY_LIMIT = 5;
         let lastTeams = { team1: [], team2: [] };
+        let lastResultUndo = null; // 승리 반영 전 스냅샷
 
         const uid = () => Math.random().toString(36).slice(2, 10);
         const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -944,6 +946,14 @@
         const eloKWrap = document.getElementById('eloKWrap');
         const winBonusWrap = document.getElementById('winBonusWrap');
         const managePanel = document.getElementById('managePanel');
+        const btnUndo = document.getElementById('btnUndo');
+        function setUndoEnabled(on) {
+            if (!btnUndo) return;
+            btnUndo.disabled = !on;
+            btnUndo.title = on ? '마지막 결과 되돌리기' : '되돌릴 결과가 없습니다';
+        }
+        // 초기 비활성화
+        setUndoEnabled(false);
 
         const BALANCE_MODE_KEY = 'balance_mode_v1';
         const MMR_TOLERANCE_KEY = 'mmr_tolerance_v1';
@@ -2015,6 +2025,19 @@
         function applyResult(winTeam) {
             const ids1 = new Set(currentTeams.team1), ids2 = new Set(currentTeams.team2);
             if (ids1.size === 0 || ids2.size === 0 || ids1.size !== ids2.size) { alert('먼저 짝수 인원으로 팀을 만들어주세요.'); return; }
+            // === 되돌리기 스냅샷(변경 전) 저장 ===
+            const affectedIds = [...ids1, ...ids2];
+            const undoSnapshot = affectedIds.map(id => {
+                const p = roster.find(x => x.id === id);
+                return p ? {
+                    id: p.id,
+                    score: p.score,
+                    games: p.games || 0,
+                    wins: p.wins || 0,
+                    losses: p.losses || 0,
+                    lastDelta: p.lastDelta || 0
+                } : null;
+            }).filter(Boolean);
 
             roster.forEach(p => p.lastDelta = 0);
 
@@ -2068,7 +2091,42 @@
                 });
             }
             saveLocal(); renderRoster(); renderTeams();
+            // === undo 가능 상태로 기록 ===
+            lastResultUndo = { snapshot: undoSnapshot };
+            setUndoEnabled(true);
         }
+
+        function undoLastResult() {
+            if (!lastResultUndo || !lastResultUndo.snapshot || !lastResultUndo.snapshot.length) {
+                alert('되돌릴 결과가 없습니다.');
+                return;
+            }
+            const map = new Map(lastResultUndo.snapshot.map(s => [s.id, s]));
+
+            // 스냅샷으로 복구
+            roster.forEach(p => {
+                const s = map.get(p.id);
+                if (s) {
+                    p.score = s.score;
+                    p.games = s.games;
+                    p.wins = s.wins;
+                    p.losses = s.losses;
+                    p.lastDelta = 0; // 되돌린 상태 표시
+                }
+            });
+
+            saveLocal();
+            renderRoster();
+            renderTeams();
+
+            lastResultUndo = null;     // 단일 단계 되돌리기
+            setUndoEnabled(false);
+        }
+
+        if (btnUndo) {
+            btnUndo.addEventListener('click', undoLastResult);
+        }
+
 
         /* ============ 환경설정 ============ */
         function initPrefs() {
@@ -2221,8 +2279,8 @@
 
             // 파티클 생성(360도 확산)
             const particles = Array.from({ length: count }, () => {
-                const CENTER_DEG = -90; 
-                const SPREAD_DEG = 180;  
+                const CENTER_DEG = -90;
+                const SPREAD_DEG = 180;
                 const theta = ((CENTER_DEG - SPREAD_DEG / 2) + Math.random() * SPREAD_DEG) * Math.PI / 180;
                 const speed = (BASE_SPEED + Math.random() * SPEED_VAR) * POWER * dpr;
                 return {

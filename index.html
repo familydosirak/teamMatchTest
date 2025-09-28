@@ -7,7 +7,284 @@
     <title>팀 매칭 & 점수 관리</title>
 
     <link rel="stylesheet" href="./css/style.css" />
+<!DOCTYPE html>
+<html lang="ko">
 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>팀 매칭 & 점수 관리</title>
+
+    <link rel="stylesheet" href="./css/style.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    
+    <script>
+        window.APP_CONFIG = { SYNC_MODE: false }; // 동기화 모드 설정
+    </script>
+
+</head>
+
+<body>
+    <div class="wrap">
+        <span style="font-size:28px; font-weight: bold; padding-right: 10px;">팀 매칭 & 점수 관리</span>
+        <button class="btn ghost" id="btnShareRoom" title="같이 보기 링크 생성">공유 링크</button>
+        <span class="muted" id="viewModeBadge" style="white-space:nowrap;"></span>
+        <div class="grid">
+            <!-- Left: Teams -->
+            <div class="panel">
+                <div class="hd">
+                    <div class="title">Teams</div>
+                </div>
+                <div class="bd">
+                    <div class="teamControls">
+                        <label class="muted">팀 섞기 기준
+                            <select id="balanceMode">
+                                <!-- <option value="ignore_line">라인무시</option> -->
+                                <option value="prefer_line" selected>라인우선</option>
+                                <option value="prefer_mmr">MMR우선</option>
+                            </select>
+                            <label class="muted">균형 허용치
+                                <input id="mmrTolerance" type="number" value="120" style="width:90px" />
+                            </label>
+                            <label class="muted" style="display: none;">섞기 강도
+                                <select id="mixStrength">
+                                    <option value="normal" selected>보통</option>
+                                    <option value="strong">강함</option>
+                                </select>
+                            </label>
+                        </label>
+                        <label class="muted">팀 정렬
+                            <select id="teamSort">
+                                <option value="name" selected>이름 ▲</option>
+                                <option value="line">주/부라인</option>
+                                <option value="wr">승률 ▲</option>
+                                <option value="score">점수 ▲</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="teams">
+                        <div class="team" id="team1Box">
+                            <h3>1팀 <span class="avg" id="avg1">평균 0</span></h3>
+                            <ul id="team1"></ul>
+                        </div>
+                        <div class="team" id="team2Box" style="margin-top:15px;">
+                            <h3>2팀 <span class="avg" id="avg2">평균 0</span></h3>
+                            <ul id="team2"></ul>
+                        </div>
+                    </div>
+
+                    <div class="winbar" style="margin-top:10px">
+                        <div class="winbar-left">
+                            <label class="muted">점수 방식
+                                <select id="scoringMode">
+                                    <option value="elo">Elo 레이팅</option>
+                                    <option value="fixed">고정 가산/감산</option>
+                                </select>
+                            </label>
+
+                            <label class="muted" id="eloKWrap">Elo K
+                                <input id="eloK" type="number" value="60" />
+                            </label>
+
+                            <label class="muted" id="winBonusWrap">승리 보상
+                                <input id="winBonusInput" type="number" value="30" />
+                            </label>
+
+                            <div class="wins">
+                                <button class="btn success" id="btnWin1" title="1팀 승">1팀 승리</button>
+                                <button class="btn success" id="btnWin2" title="2팀 승">2팀 승리</button>
+                                <button class="btn ghost" id="btnUndo" title="마지막 결과 되돌리기" disabled>되돌리기</button>
+                            </div>
+                        </div>
+
+                        <div class="winbar-right">
+                            <button class="btn ghost" id="btnCopyTeamsText" title="팀 구성 텍스트 복사">팀 구성 복사</button>
+                            <button class="btn primary" id="btnRemakeTeams">현재 멤버로 팀 다시 짜기</button>
+                            <button class="btn ghost" id="btnClearTeams">팀 비우기</button>
+                        </div>
+                    </div>
+
+                    <div class="muted" style="padding-top:15px;">배치: 각 플레이어의 <b>현재 판수가 ≤ 10</b>이면 점수 변화가 <b>2배</b>로
+                        적용됩니다.</div>
+                    <div class="muted" style="padding-top:15px;">고정감산을 선택할 경우 승리 보상만큼의 점수가 가산/감산 됩니다.</div>
+                    <div class="muted" style="padding-top:15px;">멤버를 인원관리에 드래그 드롭하여 제외할 수 있습니다.</div>
+                </div>
+            </div>
+
+            <!-- Right: Roster + IO -->
+            <div class="panel">
+                <div class="hd">
+                    <div class="title">인원 관리</div>
+                </div>
+                <div class="bd">
+                    <div class="listbar manage" style="gap:10px;align-items:center;flex-wrap:wrap;padding-bottom:12px;">
+                        <input class="grow" id="nameInput" type="text" placeholder="이름 (최대 16자)" />
+                        <input style="width:120px" id="scoreInput" type="number" placeholder="초기 점수" value="1000" />
+                        <label class="muted">주라인
+                            <select id="linePrimaryInput" class="line-select">
+                                <option value="A" selected>All</option>
+                                <option value="T">Top</option>
+                                <option value="J">Jungle</option>
+                                <option value="M">Mid</option>
+                                <option value="B">Bottom</option>
+                                <option value="S">Supporter</option>
+                            </select>
+                        </label>
+                        <label class="muted">부라인
+                            <select id="lineSecondaryInput" class="line-select">
+                                <option value="A" selected>All</option>
+                                <option value="T">Top</option>
+                                <option value="J">Jungle</option>
+                                <option value="M">Mid</option>
+                                <option value="B">Bottom</option>
+                                <option value="S">Supporter</option>
+                            </select>
+                        </label>
+                        <button class="btn" id="btnAdd">인원추가</button>
+
+                    </div>
+
+                    <!-- ▼ 이름 검색 바 추가 -->
+                    <div class="listbar" style="gap:10px;align-items:center;padding-bottom:10px;">
+                        <input id="rosterSearch" type="text" placeholder="이름 검색 (최소 1자)" style="width:220px" />
+                        <button class="btn small ghost" id="rosterSearchClear" title="검색 지우기">지우기</button>
+                        <span class="muted" id="rosterSearchCount">전체 0명</span>
+                        <span class="muted" id="selectedNames" style="white-space:nowrap;"></span>
+                    </div>
+                    <!-- ▲ 이름 검색 바 -->
+
+                    <div class="rosterTable" id="managePanel">
+                        <table class="rhead" style="padding-left : 10px; padding-right:15px;">
+                            <colgroup>
+                                <col style="width:44px" />
+                                <col style="width:180px" />
+                                <col style="width:110px" />
+                                <col style="width:60px" />
+                                <col style="width:60px" />
+                                <col style="width:90px" />
+                                <col style="width:50px" />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="checkAll"></th>
+                                    <th class="sortable" data-sort="name">이름 <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="line">라인<br><span class="muted"
+                                            style="font-weight:400;">주/부</span> <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="score">점수 <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="games">판수 <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="wl">승/패 <span class="sort-ind"></span></th>
+                                    <th class="sortable" data-sort="wr">승률 <span class="sort-ind"></span></th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class="rscroll">
+                            <table class="rbody">
+                                <colgroup>
+                                    <col style="width:44px" />
+                                    <col style="width:180px" />
+                                    <col style="width:110px" />
+                                    <col style="width:60px" />
+                                    <col style="width:60px" />
+                                    <col style="width:90px" />
+                                    <col style="width:50px" />
+                                </colgroup>
+                                <tbody id="rosterBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bar">
+                        <button class="btn primary" id="btnMakeTeams">선택한 인원으로 팀 짜기</button>
+                        <button class="btn ghost" id="btnToTeam1">선택 → 1팀</button>
+                        <button class="btn ghost" id="btnToTeam2">선택 → 2팀</button>
+                        <button class="btn ghost" id="btnRemoveFromTeams">선택한 인원을 팀에서 제거</button>
+                        <div class="muted">멤버를 팀에 드래그 드롭하여 추가할 수 있습니다.</div>
+                    </div>
+                    <div class="listbar" style="padding-bottom:12px">
+                        <button class="btn warn" id="btnDelete">인원 삭제(선택)</button>
+                        <button class="btn" id="btnSave">텍스트로 저장</button>
+                        <button class="btn" id="btnExportXLSX">엑셀(XLSX)로 내보내기</button>
+                        <span class="muted">현재 멤버 목록을 저장하여 불러올 수 있습니다.</span>
+                    </div>
+                    <div class="listbar" style="padding-bottom:12px">
+                        <input id="fileInput" type="file" accept=".txt,.json,.xlsx" />
+                        <button class="btn" id="btnLoad">불러오기</button>
+                        <span class="muted">파일을 인원관리 리스트에 드래그하여 불러올 수 있습니다.</span>
+                        <div class="muted" style="padding-top:15px;">
+                            티어 예시 (400점 단위):<br>
+                            Iron: 0–399<br>
+                            Bronze: 400–799<br>
+                            Silver: 800–1199<br>
+                            Gold: 1200–1599<br>
+                            Platinum: 1600–1999<br>
+                            Emerald: 2000–2399<br>
+                            Diamond: 2400–2799<br>
+                            Master: 2800–3199<br>
+                            Grandmaster: 3200–3599<br>
+                            Challenger: 3600+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="site-footer">
+            <div class="inner">
+                <!-- 1줄: 가운데 정렬 -->
+                <div class="row">
+                    <span><strong>문의</strong> : dosirak2332@daum.net</span>
+                    <span class="sep">|</span>
+                    <span><strong>제작</strong> : 도시락</span>
+                </div>
+
+                <!-- 2줄: “테스트 & 도움 주신 분들” 버튼(요약) -->
+                <details>
+                    <summary>테스트 & 도움 주신 분들</summary>
+
+                    <!-- 3줄: 열렸을 때 닉네임 칩 표시 -->
+                    <div class="chip-wrap">
+                        <span class="chip">겨울</span>
+                        <span class="chip">월레스와그로밋</span>
+                        <span class="chip">구름전자</span>
+                        <span class="chip">피스들틱</span>
+                        <span class="chip">DECOx27</span>
+                        <span class="chip">말구섭이</span>
+                        <span class="chip">Poroo</span>
+                        <span class="chip">럭스지키기</span>
+                        <span class="chip">원딜아나대신살아</span>
+                        <span class="chip">13131331</span>
+                        <span class="chip">잠실고졸장재혁</span>
+                        <span class="chip">Manza</span>
+                        <span class="chip">진규호</span>
+                        <span class="chip">Rln</span>
+                        <span class="chip">샤방샤방샤코</span>
+                        <span class="chip">KKiinKKiin</span>
+                        <span class="chip">금성</span>
+                        <span class="chip">김밥</span>
+                        <span class="chip">나루</span>
+                        <span class="chip">낸낫노이</span>
+                        <span class="chip">무뇽</span>
+                        <span class="chip">소프트</span>
+                        <span class="chip">유씨</span>
+                        <span class="chip">지망</span>
+                        <span class="chip">지호</span>
+                    </div>
+                </details>
+            </div>
+        </footer>
+
+    </div>
+    <script src="./js/firebase.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+
+</html>
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -302,3 +579,4 @@
 </body>
 
 </html>
+

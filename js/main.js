@@ -1,3 +1,4 @@
+const SYNC_MODE = !!(window.APP_CONFIG && window.APP_CONFIG.SYNC_MODE);
 
 /* =========================
     상태/상수/유틸 (필요한 것만)
@@ -60,6 +61,7 @@ function requireOwner() {
 }
 
 async function createRoomIfNeeded(roomId) {
+
     const ref = db.collection('rooms').doc(roomId);
     const snap = await ref.get();
 
@@ -212,6 +214,7 @@ function applyRemoteState(data) {
 const publishState = (() => {
     let t = null;
     return function () {
+        if (!SYNC_MODE) return; // ← DB 쓰기 차단
         if (SYNC.applying) return;
         if (!SYNC.enabled || SYNC.writing || !SYNC.roomId) return;
         if (!canEdit()) return;
@@ -231,6 +234,7 @@ const publishState = (() => {
 })();
 
 async function writeRoomNow(extra = {}) {
+    if (!SYNC_MODE) return; // ← DB 쓰기 차단
     if (!SYNC.enabled || !SYNC.roomId) return;
     const now = Date.now();
     SYNC.lastLocalTs = now;
@@ -253,11 +257,13 @@ async function writeRoomNow(extra = {}) {
 
 
 function touchSync() {
+    if (!SYNC_MODE) return; // ← 동기화 트리거 자체 무시
     if (SYNC.applying) return;
     publishState();
 }
 
 function startRoomSync(roomId) {
+    if (!SYNC_MODE) return; // ← 실시간 구독 금지
     if (SYNC.enabled) return;
     SYNC.enabled = true;
     SYNC.roomId = roomId;
@@ -1487,7 +1493,7 @@ function confirmAndApply(winTeam) {
     if (typeof WIN_LOCK !== 'undefined' && WIN_LOCK) {
         return; // 아무 것도 하지 않음
     }
-    
+
     const msg = `${winTeam === 1 ? '1팀 승리' : '2팀 승리'}로 점수를 반영할까요?`;
     if (confirm(msg)) applyResult(winTeam);
 }
@@ -1590,7 +1596,7 @@ async function applyResult(winTeam) {
     saveLocal(); renderRoster(); renderTeams();
 
     // 승리 브로드캐스트: 상태 저장 + winEvent를 한 번의 set으로 처리 (삭제 없음)
-    if (SYNC.enabled && SYNC.roomId) {
+    if (SYNC_MODE && SYNC.enabled && SYNC.roomId) {
         const ts = Date.now();
         SYNC.lastEmittedTs = ts; // 내가 쏜 이벤트 ts 기억(중복 방지)
         try {
@@ -1920,22 +1926,25 @@ function launchConfetti(targetEl, opts = {}) {
 // ===== 초기화 =====
 
 // [SYNC] Firebase Auth 준비 후 자동 접속/버튼 연결
-firebase.auth().onAuthStateChanged(async (user) => {
+if (SYNC_MODE && typeof firebase !== 'undefined' && firebase.auth) {
+  firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
-        try { await firebase.auth().signInAnonymously(); } catch (e) { console.warn(e); }
-        return;
+      try { await firebase.auth().signInAnonymously(); } catch (e) { console.warn(e); }
+      return;
     }
     SYNC.uid = user.uid;
 
     const rid = getRoomIdFromURL();
     if (rid) {
-        await createRoomIfNeeded(rid); // ownerKey 보강
-        if (!SYNC.enabled) startRoomSync(rid);
+      await createRoomIfNeeded(rid); // ownerKey 보강
+      if (!SYNC.enabled) startRoomSync(rid);
     }
-});
+  });
+}
 
 
 document.getElementById('btnShareRoom')?.addEventListener('click', async () => {
+     if (!SYNC_MODE) { alert('현재 동기화 기능이 비활성화된 로컬 모드입니다.'); return; } // ← 동작 차단
     if (!firebase.auth().currentUser) {
         try { await firebase.auth().signInAnonymously(); } catch (e) { }
     }
@@ -1943,6 +1952,11 @@ document.getElementById('btnShareRoom')?.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(url); alert('공유 링크를 복사했습니다:\n' + url); }
     catch { prompt('이 URL을 복사하세요', url); }
 });
+
+if (!SYNC_MODE) {
+  const share = document.getElementById('btnShareRoom');
+  if (share) share.remove(); // ← 완전 제거
+}
 
 
 loadLocal(); initPrefs();

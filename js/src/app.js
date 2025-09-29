@@ -5,7 +5,7 @@ import {
     lastTeams, setLastTeams, lastResultUndo, setLastResultUndo,
     avg, clamp, isPlacement, winRate, wrClass, normLine, linePair
 } from './state.js';
-import { loadLocal, saveLocal, loadLocalTeams, loadLocalPrefs, saveLocalPrefs } from './storage.js';
+import { loadLocal, saveLocal, loadLocalTeams, loadLocalPrefs, saveLocalPrefs, loadTeamSort, saveTeamSort } from './storage.js';
 import { buildBalancedTeams } from './teams.js';
 import { copyToClipboard, buildTeamsText, sortRosterForExport, exportRosterXLSX, parseTextToRoster, parseXlsxToRoster } from './io.js';
 import { canEdit, requireOwner, touchSync, startRoomSync, createRoomIfNeeded, ensureRoomAndGetUrl, addIdToTeam, lockWinButtons, setUiBridge, getRoomIdFromURL, writeRoomNow, isWinLocked, persistTeamsLocalIfNeeded } from './sync.js';
@@ -115,7 +115,7 @@ export function renderTeams() {
     els.avg1.innerHTML = `평균 <span class="${a1 >= a2 ? 'good' : 'bad'}">${a1.toFixed(1)}</span>`;
     els.avg2.innerHTML = `평균 <span class="${a2 >= a1 ? 'good' : 'bad'}">${a2.toFixed(1)}</span>`;
 
-    const sortKey = (localStorage.getItem('team_sort_local_v1') || 'name');
+    const sortKey = loadTeamSort();
     const cmp = (a, b) => {
         if (sortKey === 'name') return a.name.localeCompare(b.name, 'ko');
         if (sortKey === 'line') return linePair(a).localeCompare(linePair(b));
@@ -221,6 +221,39 @@ function bindDragAndDrop() {
     window.addEventListener('drop', e => {
         if (!(e.target && els.managePanel && els.managePanel.contains(e.target))) { e.preventDefault(); }
     });
+
+    // ===== 인원 관리 패널 파일 드래그/드롭 불러오기 =====
+    if (els.managePanel) {
+        els.managePanel.addEventListener('dragenter', (e) => {
+            if (isFileDrag(e)) {
+                e.preventDefault();
+                els.managePanel.classList.add('drop-target'); // 이미 쓰는 강조 클래스를 재사용
+            }
+        });
+        els.managePanel.addEventListener('dragover', (e) => {
+            if (isFileDrag(e)) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            }
+        });
+        els.managePanel.addEventListener('dragleave', (e) => {
+            if (!els.managePanel.contains(e.relatedTarget)) {
+                els.managePanel.classList.remove('drop-target');
+            }
+        });
+        els.managePanel.addEventListener('drop', (e) => {
+            if (isFileDrag(e)) {
+                e.preventDefault();
+                e.stopPropagation(); // rosterBody의 팀 이동 드롭과 충돌 방지
+                els.managePanel.classList.remove('drop-target');
+
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
+                importRosterFromFile(file);
+            }
+        });
+    }
+
+
 }
 
 function maybeCreateShareButton() {
@@ -243,6 +276,53 @@ function maybeCreateShareButton() {
 
     // els 참조 갱신(기존 코드의 이벤트 바인딩에서 씀)
     els.btnShareRoom = btn;
+}
+
+// 파일 드래그 여부 판별
+function isFileDrag(e) {
+    try {
+        return e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+    } catch { return false; }
+}
+
+// 파일 1개를 받아 로스터로 불러오기 (btnLoad 로직 재사용)
+function importRosterFromFile(file) {
+    if (!file) { alert('불러올 파일을 찾지 못했습니다.'); return; }
+    const name = (file.name || '').toLowerCase();
+
+    if (name.endsWith('.xlsx')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const { imported, error } = parseXlsxToRoster(reader.result);
+            if (error) { alert(error); return; }
+            setRoster(imported);
+            setCurrentTeams({ team1: [], team2: [] });
+            saveLocal(roster);
+            renderRoster(); renderTeams();
+            touchSync(); // 방에 있으면 전파, 아니면 무시
+            alert(`${imported.length}명의 데이터를 XLSX에서 불러와 인원 목록을 교체했습니다.`);
+        };
+        reader.readAsArrayBuffer(file);
+        return;
+    }
+
+    if (name.endsWith('.txt') || name.endsWith('.json')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const { imported, error } = parseTextToRoster(String(reader.result || ''));
+            if (error) { alert(error); return; }
+            setRoster(imported);
+            setCurrentTeams({ team1: [], team2: [] });
+            saveLocal(roster);
+            renderRoster(); renderTeams();
+            touchSync();
+            alert(`${imported.length}명의 데이터를 불러와 인원 목록을 교체했습니다.`);
+        };
+        reader.readAsText(file, 'utf-8');
+        return;
+    }
+
+    alert('지원하지 않는 형식입니다. .txt, .json 또는 .xlsx 파일을 사용하세요.');
 }
 
 
@@ -301,6 +381,11 @@ function registerEventHandlers() {
             if (rosterSortKey === key) rosterSortAsc = !rosterSortAsc; else { rosterSortKey = key; rosterSortAsc = true; }
             renderRoster();
         });
+    });
+
+    els.teamSortSel?.addEventListener('change', () => {
+        saveTeamSort(els.teamSortSel.value || 'name');
+        renderTeams();
     });
 
     // ===== Prefs 변경 시 저장/전파 (SYNC 인식) =====
@@ -680,6 +765,10 @@ export async function init() {
         }
     }
     // UI
+    if (els.teamSortSel) {
+        els.teamSortSel.value = loadTeamSort(); // 유효성/기본값 처리 포함
+    }
+    
     renderRoster(); renderTeams();
     maybeCreateShareButton();
     bindDragAndDrop();

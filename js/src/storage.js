@@ -83,3 +83,22 @@ export function loadLocalTeams() {
     }
 }
 
+
+// === Team sort local persistence ===
+const TEAM_SORT_KEY = 'team_sort_local_v1';
+const TEAM_SORT_ALLOW = ['name', 'line', 'wr', 'score'];
+
+export function saveTeamSort(v) {
+    try { localStorage.setItem(TEAM_SORT_KEY, String(v)); } catch { }
+}
+
+export function loadTeamSort() {
+    try {
+        const v = localStorage.getItem(TEAM_SORT_KEY);
+        return TEAM_SORT_ALLOW.includes(v) ? v : 'name';
+    } catch {
+        return 'name';
+    }
+}
+
+

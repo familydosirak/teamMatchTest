@@ -24,7 +24,8 @@ export function setLastResultUndo(v) { lastResultUndo = v; }
 export const uid = () => Math.random().toString(36).slice(2, 10);
 export const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 export const avg = a => a.length ? (a.reduce((s, x) => s + x, 0) / a.length) : 0;
-export const isPlacement = g => (Number(g) || 0) <= 10;
+import { PLACEMENT_GAMES } from './config.js';
+export const isPlacement = g => (Number(g) || 0) < PLACEMENT_GAMES;
 export const winRate = p => { const w = +p.wins || 0, l = +p.losses || 0, t = w + l; return t ? Math.round((w / t) * 100) : 0; };
 export const wrClass = r => r >= 53 ? 'wr-good' : (r <= 47 ? 'wr-bad' : '');
 export const normLine = v => { v = String(v || 'A').toUpperCase(); return LINES.includes(v) ? v : 'A'; };

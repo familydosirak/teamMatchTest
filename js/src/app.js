@@ -800,7 +800,10 @@ function registerEventHandlers() {
         if (rid) {
             await createRoomIfNeeded(rid);
             startRoomSync(rid);
-            if (els.viewModeBadge) els.viewModeBadge.textContent = '호스트';
+            if (els.viewModeBadge) {
+                els.viewModeBadge.textContent = '호스트';
+                els.viewModeBadge.style.marginLeft = '8px';
+            }
         }
 
 
@@ -845,7 +848,11 @@ export async function init() {
     setUiBridge({
         renderRoster, renderTeams, toggleScoringControls, launchConfetti,
         getPrefs, setPrefs,
-        setReadOnlyBadge: (isOwner) => { if (els.viewModeBadge) els.viewModeBadge.textContent = isOwner ? '호스트' : '읽기전용'; }
+        setReadOnlyBadge: (isOwner) => {
+            if (!els.viewModeBadge) return;
+            els.viewModeBadge.textContent = isOwner ? '호스트' : '읽기전용';
+            els.viewModeBadge.style.marginLeft = els.viewModeBadge.textContent ? '8px' : '0';
+        }
     });
 
     const verEl = document.getElementById('appVersion');

@@ -598,3 +598,10 @@ mark {
     box-shadow: inset 0 0 0 2px rgba(239, 68, 68, .35);
     border-color: #5a2330;
 }
+
+#managePanel.drop-target {
+    outline: 3px dashed #3b82f6;         /* 파란 점선 */
+    outline-offset: -4px;
+    background-color: rgba(59, 130, 246, 0.06);
+    transition: background-color .12s ease, outline-color .12s ease;
+}

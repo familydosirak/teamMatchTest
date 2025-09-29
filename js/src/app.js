@@ -1,5 +1,5 @@
 // src/app.js
-import { SYNC_MODE, PLACEMENT_MULTIPLIER } from './config.js';
+import { SYNC_MODE, PLACEMENT_MULTIPLIER, APP_VERSION, DISPLAY_VERSION } from './config.js';
 import {
     SYNC, roster, setRoster, currentTeams, setCurrentTeams,
     lastTeams, setLastTeams, lastResultUndo, setLastResultUndo,
@@ -741,6 +741,9 @@ export async function init() {
         setReadOnlyBadge: (isOwner) => { if (els.viewModeBadge) els.viewModeBadge.textContent = isOwner ? '호스트' : '읽기전용'; }
     });
 
+    const verEl = document.getElementById('appVersion');
+    if (verEl) verEl.textContent = `v${DISPLAY_VERSION || APP_VERSION}`;
+
     // 로컬 로드 + 정규화
     const loaded = loadLocal();
     setRoster(loaded.map(p => ({ ...p, mainLine: normLine(p.mainLine || 'A'), subLine: normLine(p.subLine || 'A') })));
@@ -768,7 +771,7 @@ export async function init() {
     if (els.teamSortSel) {
         els.teamSortSel.value = loadTeamSort(); // 유효성/기본값 처리 포함
     }
-    
+
     renderRoster(); renderTeams();
     maybeCreateShareButton();
     bindDragAndDrop();

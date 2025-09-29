@@ -1,5 +1,5 @@
 // src/app.js
-import { SYNC_MODE } from './config.js';
+import { SYNC_MODE, PLACEMENT_MULTIPLIER } from './config.js';
 import {
     SYNC, roster, setRoster, currentTeams, setCurrentTeams,
     lastTeams, setLastTeams, lastResultUndo, setLastResultUndo,
@@ -623,12 +623,12 @@ function registerEventHandlers() {
             const d1 = K * (S1 - E1), d2 = K * (S2 - E2);
 
             team1.forEach(p => {
-                const mult = isPlacement(p.games) ? 2 : 1; const change = Math.round(d1 * mult);
+                const mult = isPlacement(p.games) ? PLACEMENT_MULTIPLIER : 1; const change = Math.round(d1 * mult);
                 p.lastDelta = change; p.score = Math.round(clamp(p.score + change, -9999, 9999));
                 p.games = (p.games || 0) + 1; if (winTeam === 1) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
             });
             team2.forEach(p => {
-                const mult = isPlacement(p.games) ? 2 : 1; const change = Math.round(d2 * mult);
+                const mult = isPlacement(p.games) ? PLACEMENT_MULTIPLIER : 1; const change = Math.round(d2 * mult);
                 p.lastDelta = change; p.score = Math.round(clamp(p.score + change, -9999, 9999));
                 p.games = (p.games || 0) + 1; if (winTeam === 2) p.wins = (p.wins || 0) + 1; else p.losses = (p.losses || 0) + 1;
             });
@@ -636,7 +636,7 @@ function registerEventHandlers() {
             const delta = Math.round(Number(els.winBonusInput && els.winBonusInput.value ? els.winBonusInput.value : 10)) || 10;
             roster.forEach(p => {
                 const in1 = ids1.has(p.id), in2 = ids2.has(p.id); if (!in1 && !in2) return;
-                const mult = isPlacement(p.games) ? 2 : 1; let change = 0;
+                const mult = isPlacement(p.games) ? PLACEMENT_MULTIPLIER : 1; let change = 0;
                 if (in1) change = (winTeam === 1 ? delta * mult : -delta * mult);
                 if (in2) change = (winTeam === 2 ? delta * mult : -delta * mult);
                 p.lastDelta = change; p.score = Math.round(clamp(p.score + change, -9999, 9999)); p.games = (p.games || 0) + 1;
